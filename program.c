@@ -239,7 +239,6 @@ int isRefrigeratorItem(int item) {
 	return 0;
 }
 
-
 void sigHandler(int signal) {
 	if (signal == SIGINT) {
 
@@ -264,6 +263,7 @@ int main() {
 	int ovenId = initSemaphore(OVEN, 1);
 
 	int bakers = -1;
+	int bakerId = -1;
 
 	while(bakers < 0) {
                 printf("How many bakers would you like\n");
