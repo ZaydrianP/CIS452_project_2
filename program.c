@@ -263,14 +263,20 @@ int main() {
 	int spoonId = initSemaphore(SPOON, 5);
 	int ovenId = initSemaphore(OVEN, 1);
 
-	int bakers = 0;
+	int bakers = -1;
 
-	printf("How many bakers would you like\n");
-	scanf("%d", &bakers);
+	while(bakers < 0) {
+                printf("How many bakers would you like\n");
+
+                scanf("%d", &bakers);
+        	if(bakers < 0) {
+                        printf("Please provide a valid number of bakers.");
+ 		}
+	}
 
 	//Create n threads, with each one representing a baker.
-	struct sharedMem mem;
-	initSharedMemory(mem, sizeof(char));
+	//struct sharedMem mem;
+	//initSharedMemory(mem, sizeof(char));
 
 	while(1) {
 		//Busy waiting. Makes only way for program to end via termination
