@@ -38,6 +38,13 @@ const int cinnamonRollRecipe[] = {FLOUR, SUGAR, SALT, BUTTER, EGGS, CINNAMON};
 const int pantryIngredients[] = {FLOUR, SUGAR, YEAST, BAKING_SODA, SALT, CINNAMON};
 const int refrigeratorIngredients[] = {EGGS, MILK, BUTTER};
 
+int mixerId;
+int pantryId;
+int refrigeratorId;
+int bowlId;
+int spoonId;
+int ovenId;
+
 struct semaphoresStruct {
 	int length;
 	int *semaphoreIds;
@@ -255,12 +262,12 @@ void sigHandler(int signal) {
 int main() {
 	signal(SIGINT, sigHandler);
 
-	int mixerId = initSemaphore(MIXER, 2);
-	int pantryId = initSemaphore(PANTRY, 1);
-	int refrigeratorId = initSemaphore(REFRIGERATOR, 2);
-	int bowlId = initSemaphore(BOWL, 3);
-	int spoonId = initSemaphore(SPOON, 5);
-	int ovenId = initSemaphore(OVEN, 1);
+	mixerId = initSemaphore(MIXER, 2);
+	pantryId = initSemaphore(PANTRY, 1);
+	refrigeratorId = initSemaphore(REFRIGERATOR, 2);
+	bowlId = initSemaphore(BOWL, 3);
+	spoonId = initSemaphore(SPOON, 5);
+	ovenId = initSemaphore(OVEN, 1);
 
 	int bakers = -1;
 	int bakerId = -1;
