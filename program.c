@@ -29,6 +29,12 @@ const int BOWL = 3;
 const int SPOON = 4;
 const int OVEN = 5;
 
+const int COOKIE = 0;
+const int PANCAKE = 1;
+const int PIZZA = 2;
+const int PRETZEL = 3;
+const int CINROLL = 4;
+
 const int cookieRecipe[] = {FLOUR, SUGAR, MILK, BUTTER};
 const int pancakeRecipe[] = {FLOUR, SUGAR, BAKING_SODA, SALT, EGGS, MILK, BUTTER};
 const int pizzaDoughRecipe[] = {YEAST, SUGAR, SALT};
@@ -38,12 +44,12 @@ const int cinnamonRollRecipe[] = {FLOUR, SUGAR, SALT, BUTTER, EGGS, CINNAMON};
 const int pantryIngredients[] = {FLOUR, SUGAR, YEAST, BAKING_SODA, SALT, CINNAMON};
 const int refrigeratorIngredients[] = {EGGS, MILK, BUTTER};
 
-int mixerId;
-int pantryId;
-int refrigeratorId;
-int bowlId;
-int spoonId;
-int ovenId;
+int mixerSemID;
+int pantrySemID;
+int refrigeratorSemID;
+int bowlSemID;
+int spoonSemID;
+int ovenSemID;
 
 struct semaphoresStruct {
 	int length;
@@ -262,23 +268,24 @@ void sigHandler(int signal) {
 int main() {
 	signal(SIGINT, sigHandler);
 
-	mixerId = initSemaphore(MIXER, 2);
-	pantryId = initSemaphore(PANTRY, 1);
-	refrigeratorId = initSemaphore(REFRIGERATOR, 2);
-	bowlId = initSemaphore(BOWL, 3);
-	spoonId = initSemaphore(SPOON, 5);
-	ovenId = initSemaphore(OVEN, 1);
+	mixerSemID = initSemaphore(MIXER, 2);
+	pantrySemID = initSemaphore(PANTRY, 1);
+	refrigeratorSemID = initSemaphore(REFRIGERATOR, 2);
+	bowlSemID = initSemaphore(BOWL, 3);
+	spoonSemID = initSemaphore(SPOON, 5);
+	ovenSemID = initSemaphore(OVEN, 1);
 
 	int bakers = -1;
 	int bakerId = -1;
+
 
 	while(bakers < 0) {
                 printf("How many bakers would you like\n");
 
                 scanf("%d", &bakers);
         	if(bakers < 0) {
-                        printf("Please provide a valid number of bakers.");
- 		}
+                printf("Please provide a valid number of bakers.");
+ 			}
 	}
 
 	//Create n threads, with each one representing a baker.
