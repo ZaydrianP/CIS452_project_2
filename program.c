@@ -267,77 +267,70 @@ void sigHandler(int signal) {
 
 }
 
-int* initRecipes(int recipe){
+int* initRecipes(int recipe) {
 	static int initRecipe[9];
 
 	printf("Initializing %d recipe\n", recipe);
-
-    if (recipe < 0 || recipe > 4) {
-        perror("Not a valid recipe");
-        exit(1);
-    }
-
-	else{
-		switch(recipe){
-
-			case COOKIE:
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 0;
+	if (recipe < 0 || recipe > 4) {
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else {
+		switch (recipe) {
+		case COOKIE:
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 0;
 			initRecipe[BAKING_SODA] = 0;
-			initRecipe[SALT]        = 0;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 0;
-			initRecipe[MILK]        = 1;
-			initRecipe[BUTTER]      = 1;
+			initRecipe[SALT] = 0;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 0;
+			initRecipe[MILK] = 1;
+			initRecipe[BUTTER] = 1;
 			break;
-
-			case PANCAKE:
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 0;
+		case PANCAKE:
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 0;
 			initRecipe[BAKING_SODA] = 1;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 1;
-			initRecipe[MILK]        = 1;
-			initRecipe[BUTTER]      = 1;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 1;
+			initRecipe[MILK] = 1;
+			initRecipe[BUTTER] = 1;
 			break;
-
-			case PIZZA:
-			initRecipe[FLOUR]       = 0;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 1;
+		case PIZZA:
+			initRecipe[FLOUR] = 0;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 1;
 			initRecipe[BAKING_SODA] = 0;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 0;
-			initRecipe[MILK]        = 0;
-			initRecipe[BUTTER]      = 0;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 0;
+			initRecipe[MILK] = 0;
+			initRecipe[BUTTER] = 0;
 			break;
-
-			case PRETZEL:
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 1;
+		case PRETZEL:
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 1;
 			initRecipe[BAKING_SODA] = 1;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 1;
-			initRecipe[MILK]        = 0;
-			initRecipe[BUTTER]      = 0;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 1;
+			initRecipe[MILK] = 0;
+			initRecipe[BUTTER] = 0;
 			break;
-
-			case CINROLL:
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 0;
+		case CINROLL:
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 0;
 			initRecipe[BAKING_SODA] = 0;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 1;
-			initRecipe[EGGS]        = 1;
-			initRecipe[MILK]        = 0;
-			initRecipe[BUTTER]      = 1;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 1;
+			initRecipe[EGGS] = 1;
+			initRecipe[MILK] = 0;
+			initRecipe[BUTTER] = 1;
 		}
 
 		printf("Finised %d recipe\n", recipe);
@@ -345,49 +338,133 @@ int* initRecipes(int recipe){
 	}
 }
 
-int checkRecipe(int recipe[]){
 
-	for(int i = 0; i < 9; i++){
-		if(recipe[i] == 1){
+int checkRecipe(int recipe[]) {
+
+	if (sizeof(recipe) != 9) {
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else {
+		for (int i = 0; i < 9; i++) {
+			if (recipe[i] == 1) {
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+int checkIngredient(int recipe[], int ingredient) {
+
+	if (sizeof(recipe) != 9) {
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else {
+		if (recipe[ingredient] == 1) {
 			return 1;
 		}
 	}
 
 	return 0;
 }
-int checkIngredient(int recipe[], int ingredient){
 
-	if (recipe[ingredient] == 1){
+void addIngredient(int recipe[], int ingredient) {
+
+	if (recipe[ingredient] == 1) {
+		recipe[ingredient] = 0;
+	}
+}
+
+int getAvailableIngredients(int* recipe) {
+
+	return 0;
+}
+
+int checkIngredient(int recipe[], int ingredient) {
+
+	if (recipe[ingredient] == 1) {
 		return 1;
 	}
 
 	return 0;
 }
 
-void addIngredient(int recipe[], int ingredient){
+int getIngredient(int ingredient) {
 
-	if (recipe[ingredient] == 1){
-		recipe[ingredient] = 0;
+}
+
+int isARecipeRemaining(int[] recipes, int length) {
+	for (int i = 0; i < length; i++) {
+		if (recipes[i]) { return 1; }
 	}
 
+	return 0;
 }
 
 void* simulateBaker(void* val) {
 	//Put all baker logic in here
 	//NOTE: When this function terminates, it will reclaim memory from the thread
 	int* bakerId = (int*)val;
-	printf("Baker %d found mixer sem ID %d\n", *bakerId, mixerSemID);
 
-	int *cookie = initRecipes(COOKIE);
-	int *pancake = initRecipes(PANCAKE);
-	int *pizzaDough = initRecipes(PIZZA);
-	int *softPretzel = initRecipes(PRETZEL);
-	int *cinnamonRoll = initRecipes(CINROLL);
+	//Setup recipes
+	int* cookie = initRecipes(COOKIE);
+	int* pancake = initRecipes(PANCAKE);
+	int* pizzaDough = initRecipes(PIZZA);
+	int* softPretzel = initRecipes(PRETZEL);
+	int* cinnamonRoll = initRecipes(CINROLL);
 
+	int recipesRemaining[] = {1, 1, 1, 1, 1};
+
+	//Setup tools
 	int tools[3];
 	tools[MIXER] = 1;
 	tools[BOWL] = 1;
 	tools[SPOON] = 1;
+
+	//Iterate through each of the recipes. 
+	int i = 0;
+	while (isARecipeRemaining(recipesRemaining, 5)) {
+		
+		i++;
+		i = i % 5
+
+		if (!recipesRemaining[i]) {
+			continue;
+		}
+
+		int* currentRecipe;
+		switch (i) {
+			case 0:
+				currentRecipe = cookie;
+				break;
+			case 1:
+				currentRecipe = pancake;
+				break;
+			case 2:
+				currentRecipe = pizzaDough;
+				break;
+			case 3:
+				currentRecipe = softPretzel;
+				break;
+			case 4:
+				currentRecipe = cinnamonRoll;
+				break;
+
+			default:
+				printf("Invalid index for recipe found within simulateBaker.")
+		}
+
+		int isRecipeComplete = getAvailableIngredients(currentRecipe);
+
+		if (isRecipeComplete) {
+			//Handle mixers...
+			
+			//Handle semaphores. 
+
+		}
+	}
 
 	free(bakerId);
 	printf("Baker has finished\n");
