@@ -23,10 +23,12 @@ const int MILK = 7;
 const int BUTTER = 8;
 
 const int MIXER = 0;
-const int PANTRY = 1;
-const int REFRIGERATOR = 2;
-const int BOWL = 3;
-const int SPOON = 4;
+const int BOWL = 1;
+const int SPOON = 2;
+
+const int PANTRY = 0;
+const int REFRIGERATOR = 1;
+
 const int OVEN = 5;
 
 const int COOKIE = 0;
@@ -88,7 +90,7 @@ int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 	return 0; // Success
 
 }
-//TODO: Adjust this function based on what the sharedMemory represents. 
+//TODO: Adjust this function based on what the sharedMemory represents.
 int insertIntoSharedMemArray(struct sharedMem memoryAddress) {
 	struct sharedMem* temp = realloc(sharedMemory.sharedMemoryAddresses,
 		(sharedMemory.length + 1) * sizeof(struct sharedMem));
@@ -265,6 +267,127 @@ void sigHandler(int signal) {
 
 }
 
+int initRecipes(int recipe){
+	int initRecipe[9];
+
+	if(recipe < 0){
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else if(recipe > 4){
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else{
+		//Cookie needs flour, sugar, milk, and butter
+		switch(recipe == COOKIE){
+			initRecipe[FLOUR]       = 1;
+			initRecipe[SUGAR]       = 1;
+			initRecipe[YEAST]       = 0;
+			initRecipe[BAKING_SODA] = 0;
+			initRecipe[SALT]        = 0;
+			initRecipe[CINNAMON]    = 0;
+			initRecipe[EGGS]        = 0;
+			initRecipe[MILK]        = 1;
+			initRecipe[BUTTER]      = 1;
+		}
+		//Pancake needs flour, sugar, baking soda, salt, eggs, milk, butter
+		switch(recipe == PANCAKE){
+			initRecipe[FLOUR]       = 1;
+			initRecipe[SUGAR]       = 1;
+			initRecipe[YEAST]       = 0;
+			initRecipe[BAKING_SODA] = 1;
+			initRecipe[SALT]        = 1;
+			initRecipe[CINNAMON]    = 0;
+			initRecipe[EGGS]        = 1;
+			initRecipe[MILK]        = 1;
+			initRecipe[BUTTER]      = 1;
+		}
+		//Pizza dough needs sugar, yeast, salt
+		switch(recipe == PIZZA){
+			initRecipe[FLOUR]       = 0;
+			initRecipe[SUGAR]       = 1;
+			initRecipe[YEAST]       = 1;
+			initRecipe[BAKING_SODA] = 0;
+			initRecipe[SALT]        = 1;
+			initRecipe[CINNAMON]    = 0;
+			initRecipe[EGGS]        = 0;
+			initRecipe[MILK]        = 0;
+			initRecipe[BUTTER]      = 0;
+		}
+		//Soft pretzel needs flour, sugar, yeast, baking soda, salt, and eggs
+		switch(recipe == PRETZEL){
+			initRecipe[FLOUR]       = 1;
+			initRecipe[SUGAR]       = 1;
+			initRecipe[YEAST]       = 1;
+			initRecipe[BAKING_SODA] = 1;
+			initRecipe[SALT]        = 1;
+			initRecipe[CINNAMON]    = 0;
+			initRecipe[EGGS]        = 1;
+			initRecipe[MILK]        = 0;
+			initRecipe[BUTTER]      = 0;
+		}
+		//Cinnamon roll needs flour, sugar, salt, cinnamon, eggs, butter
+		switch(recipe == CINROLL){
+			initRecipe[FLOUR]       = 1;
+			initRecipe[SUGAR]       = 1;
+			initRecipe[YEAST]       = 0;
+			initRecipe[BAKING_SODA] = 0;
+			initRecipe[SALT]        = 1;
+			initRecipe[CINNAMON]    = 1;
+			initRecipe[EGGS]        = 1;
+			initRecipe[MILK]        = 0;
+			initRecipe[BUTTER]      = 1;
+		}
+
+		return initRecipe;
+	}
+}
+
+int checkRecipe(int recipe[]){
+
+	if(sizeof(recipe) != 9){
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else{
+		for(int i = 0; i < 9; i++){
+			if(recipe[i] == 1){
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+int checkIngredient(int recipe[], int ingredient){
+
+	if(sizeof(recipe) != 9){
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else{
+		if (recipe[ingredient] == 1){
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+void addIngredient(int recipe[], int ingredient){
+
+	if(sizeof(recipe) != 9){
+		perror("Not a valid recipe");
+		exit(1);
+	}
+	else{
+		if (recipe[ingredient] == 1){
+			recipe[ingredient] = 0;
+		}
+	}
+}
+
 void* simulateBaker(void* val) {
 	//Put all baker logic in here
 	//NOTE: When this function terminates, it will reclaim memory from the thread
@@ -312,6 +435,15 @@ int main() {
 	bowlSemID = initSemaphore(BOWL, 3);
 	spoonSemID = initSemaphore(SPOON, 5);
 	ovenSemID = initSemaphore(OVEN, 1);
+
+	int cookie = initRecipes(COOKIE);
+	int pancake = initRecipes(PANCAKE);
+	int pizzaDough = initRecipes(PIZZA);
+	int softPretzel = initRecipes(PRETZEL);
+	int cinnamonRoll =initRecipes(CINNAMON);
+
+	int tools[3];
+	tools[MIXER], tools[BOWL], tools[SPOON] = 1;
 
 	int bakers = -1;
 
