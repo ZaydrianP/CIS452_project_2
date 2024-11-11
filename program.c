@@ -267,92 +267,92 @@ void sigHandler(int signal) {
 
 }
 
-int initRecipes(int recipe){
+int[] initRecipes(int recipe) {
 	int initRecipe[9];
 
-	if(recipe < 0){
+	if (recipe < 0) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
-	else if(recipe > 4){
+	else if (recipe > 4) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
-	else{
+	else {
 		//Cookie needs flour, sugar, milk, and butter
-		switch(recipe == COOKIE){
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 0;
+		switch (recipe == COOKIE) {
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 0;
 			initRecipe[BAKING_SODA] = 0;
-			initRecipe[SALT]        = 0;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 0;
-			initRecipe[MILK]        = 1;
-			initRecipe[BUTTER]      = 1;
+			initRecipe[SALT] = 0;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 0;
+			initRecipe[MILK] = 1;
+			initRecipe[BUTTER] = 1;
 		}
 		//Pancake needs flour, sugar, baking soda, salt, eggs, milk, butter
-		switch(recipe == PANCAKE){
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 0;
+		switch (recipe == PANCAKE) {
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 0;
 			initRecipe[BAKING_SODA] = 1;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 1;
-			initRecipe[MILK]        = 1;
-			initRecipe[BUTTER]      = 1;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 1;
+			initRecipe[MILK] = 1;
+			initRecipe[BUTTER] = 1;
 		}
 		//Pizza dough needs sugar, yeast, salt
-		switch(recipe == PIZZA){
-			initRecipe[FLOUR]       = 0;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 1;
+		switch (recipe == PIZZA) {
+			initRecipe[FLOUR] = 0;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 1;
 			initRecipe[BAKING_SODA] = 0;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 0;
-			initRecipe[MILK]        = 0;
-			initRecipe[BUTTER]      = 0;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 0;
+			initRecipe[MILK] = 0;
+			initRecipe[BUTTER] = 0;
 		}
 		//Soft pretzel needs flour, sugar, yeast, baking soda, salt, and eggs
-		switch(recipe == PRETZEL){
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 1;
+		switch (recipe == PRETZEL) {
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 1;
 			initRecipe[BAKING_SODA] = 1;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 0;
-			initRecipe[EGGS]        = 1;
-			initRecipe[MILK]        = 0;
-			initRecipe[BUTTER]      = 0;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 0;
+			initRecipe[EGGS] = 1;
+			initRecipe[MILK] = 0;
+			initRecipe[BUTTER] = 0;
 		}
 		//Cinnamon roll needs flour, sugar, salt, cinnamon, eggs, butter
-		switch(recipe == CINROLL){
-			initRecipe[FLOUR]       = 1;
-			initRecipe[SUGAR]       = 1;
-			initRecipe[YEAST]       = 0;
+		switch (recipe == CINROLL) {
+			initRecipe[FLOUR] = 1;
+			initRecipe[SUGAR] = 1;
+			initRecipe[YEAST] = 0;
 			initRecipe[BAKING_SODA] = 0;
-			initRecipe[SALT]        = 1;
-			initRecipe[CINNAMON]    = 1;
-			initRecipe[EGGS]        = 1;
-			initRecipe[MILK]        = 0;
-			initRecipe[BUTTER]      = 1;
+			initRecipe[SALT] = 1;
+			initRecipe[CINNAMON] = 1;
+			initRecipe[EGGS] = 1;
+			initRecipe[MILK] = 0;
+			initRecipe[BUTTER] = 1;
 		}
 
 		return initRecipe;
 	}
 }
 
-int checkRecipe(int recipe[]){
+int checkRecipe(int recipe[]) {
 
-	if(sizeof(recipe) != 9){
+	if (sizeof(recipe) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
-	else{
-		for(int i = 0; i < 9; i++){
-			if(recipe[i] == 1){
+	else {
+		for (int i = 0; i < 9; i++) {
+			if (recipe[i] == 1) {
 				return 1;
 			}
 		}
@@ -360,14 +360,14 @@ int checkRecipe(int recipe[]){
 
 	return 0;
 }
-int checkIngredient(int recipe[], int ingredient){
+int checkIngredient(int recipe[], int ingredient) {
 
-	if(sizeof(recipe) != 9){
+	if (sizeof(recipe) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
-	else{
-		if (recipe[ingredient] == 1){
+	else {
+		if (recipe[ingredient] == 1) {
 			return 1;
 		}
 	}
@@ -375,14 +375,14 @@ int checkIngredient(int recipe[], int ingredient){
 	return 0;
 }
 
-void addIngredient(int recipe[], int ingredient){
+void addIngredient(int recipe[], int ingredient) {
 
-	if(sizeof(recipe) != 9){
+	if (sizeof(recipe) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
-	else{
-		if (recipe[ingredient] == 1){
+	else {
+		if (recipe[ingredient] == 1) {
 			recipe[ingredient] = 0;
 		}
 	}
@@ -391,10 +391,19 @@ void addIngredient(int recipe[], int ingredient){
 void* simulateBaker(void* val) {
 	//Put all baker logic in here
 	//NOTE: When this function terminates, it will reclaim memory from the thread
-	int* bakerId = (int*) val;
+	int* bakerId = (int*)val;
 	printf("Baker %d found mixer sem ID %d\n", *bakerId, mixerSemID);
 
+	int cookie = initRecipes(COOKIE);
+	int pancake = initRecipes(PANCAKE);
+	int pizzaDough = initRecipes(PIZZA);
+	int softPretzel = initRecipes(PRETZEL);
+	int cinnamonRoll = initRecipes(CINNAMON);
 
+	int tools[3];
+	tools[MIXER], tools[BOWL], tools[SPOON] = 1;
+
+	
 	free(bakerId);
 	printf("Baker has finished\n");
 	return NULL;
@@ -405,9 +414,9 @@ void spawnThread(int bakerId) {
 
 	int* id = malloc(sizeof(int));
 	*id = bakerId;
-	
+
 	int threadStatus = pthread_create(&thread, NULL, simulateBaker, id);
-	
+
 	if (threadStatus != 0) {
 		fprintf(stderr, "Thread create error %d: %s\n", threadStatus, strerror(threadStatus));
 
@@ -418,7 +427,7 @@ void spawnThread(int bakerId) {
 }
 
 void spawnThreads(int n) {
-	
+
 	//for(int bakerId = 1; bakerId <= n; bakerId++) {
 	for (int bakerId = 0; bakerId < n; bakerId++) {
 		spawnThread(bakerId);
@@ -436,15 +445,6 @@ int main() {
 	spoonSemID = initSemaphore(SPOON, 5);
 	ovenSemID = initSemaphore(OVEN, 1);
 
-	int cookie = initRecipes(COOKIE);
-	int pancake = initRecipes(PANCAKE);
-	int pizzaDough = initRecipes(PIZZA);
-	int softPretzel = initRecipes(PRETZEL);
-	int cinnamonRoll =initRecipes(CINNAMON);
-
-	int tools[3];
-	tools[MIXER], tools[BOWL], tools[SPOON] = 1;
-
 	int bakers = -1;
 
 
@@ -461,7 +461,7 @@ int main() {
 	//struct sharedMem mem;
 	//initSharedMemory(mem, sizeof(char));
 	spawnThreads(bakers);
-	
+
 
 	while (1) {
 		//Busy waiting. Makes the only way for program to end via termination
