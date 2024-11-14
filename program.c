@@ -356,6 +356,7 @@ int checkRecipe(int recipe[]) {
 	return 0;
 }
 
+//Return: Success of getting an ingredient
 int checkIngredient(int* recipe, int ingredient) {
 
 	if (sizeof(*recipe) / sizeof(recipe[0]) != 9) {
@@ -367,30 +368,33 @@ int checkIngredient(int* recipe, int ingredient) {
 	}
 	else {
 		if (recipe[ingredient] == 1) {
-			return 1;
+			return 0;
 		}
 
-		int ingredientSuccessfullyGotten = getIngredient(&recipe, ingredient);
-
+		return getIngredient(&recipe, ingredient);
 
 	}
 
 	return 0;
 }
 
-void addIngredient(int recipe[], int ingredient) {
+void addIngredient(int *recipe, int ingredient) {
 
-	if (recipe[ingredient] == 1) {
-		recipe[ingredient] = 0;
+	if (*recipe[ingredient] == 1) {
+		*recipe[ingredient] = 0;
 	}
 }
-
+// Return: If an ingredient was successfully gotten
 int getAvailableIngredients(int* recipe) {
+	int updated = 0
+	for (int i = 0; i < 9; i++) {
+		updated |= checkIngredient(recipe, i);
+	}
 
-	return 0;
+	return updated;
 }
 
-int getIngredient(int ingredient) {
+int getIngredient(int *recipe, int ingredient) {
 
 }
 
