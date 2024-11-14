@@ -72,6 +72,38 @@ struct semaphoresStruct semaphores;
 
 struct sharedMemStruct sharedMemory;
 
+typedef struct{
+    int ingredients[9];
+} Refrigerator;
+
+void initializeRefrigerator(Refrigerator *fridge) {
+    fridge->ingredients[FLOUR] = 0;
+    fridge->ingredients[SUGAR] = 0;
+    fridge->ingredients[YEAST] = 0;
+    fridge->ingredients[BAKING_SODA] = 0;
+    fridge->ingredients[SALT] = 0;
+    fridge->ingredients[CINNAMON] = 0;
+    fridge->ingredients[EGGS] = 1;
+    fridge->ingredients[MILK] = 1;
+    fridge->ingredients[BUTTER] = 1;
+}
+
+typedef struct{
+    int ingredients[9];
+} Pantry;
+
+void initializePantry(Refrigerator *fridge) {
+    fridge->ingredients[FLOUR] = 1;
+    fridge->ingredients[SUGAR] = 1;
+    fridge->ingredients[YEAST] = 1;
+    fridge->ingredients[BAKING_SODA] = 1;
+    fridge->ingredients[SALT] = 1;
+    fridge->ingredients[CINNAMON] = 1;
+    fridge->ingredients[EGGS] = 0;
+    fridge->ingredients[MILK] = 0;
+    fridge->ingredients[BUTTER] = 0;
+}
+
 int isIn(int haystack[], int haystackSize, int needle) {
 
 	for (int i = 0; i < haystackSize; i++) {
