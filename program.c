@@ -72,7 +72,7 @@ struct semaphoresStruct semaphores;
 
 struct sharedMemStruct sharedMemory;
 
-int isIn(int haystack[], int haystackSize, int* needle) {
+int isIn(int haystack[], int haystackSize, int needle) {
 
 	for (int i = 0; i < haystackSize; i++) {
 		if (haystack[i] == needle) {
