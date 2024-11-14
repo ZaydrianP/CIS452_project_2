@@ -92,16 +92,16 @@ typedef struct{
     int ingredients[9];
 } Pantry;
 
-void initializePantry(Refrigerator *fridge) {
-    fridge->ingredients[FLOUR] = 1;
-    fridge->ingredients[SUGAR] = 1;
-    fridge->ingredients[YEAST] = 1;
-    fridge->ingredients[BAKING_SODA] = 1;
-    fridge->ingredients[SALT] = 1;
-    fridge->ingredients[CINNAMON] = 1;
-    fridge->ingredients[EGGS] = 0;
-    fridge->ingredients[MILK] = 0;
-    fridge->ingredients[BUTTER] = 0;
+void initializePantry(Pantry *pantry) {
+    pantry->ingredients[FLOUR] = 1;
+    pantry->ingredients[SUGAR] = 1;
+    pantry->ingredients[YEAST] = 1;
+    pantry->ingredients[BAKING_SODA] = 1;
+    pantry->ingredients[SALT] = 1;
+    pantry->ingredients[CINNAMON] = 1;
+    pantry->ingredients[EGGS] = 0;
+    pantry->ingredients[MILK] = 0;
+    pantry->ingredients[BUTTER] = 0;
 }
 
 int isIn(int haystack[], int haystackSize, int needle) {
