@@ -355,16 +355,24 @@ int checkRecipe(int recipe[]) {
 
 	return 0;
 }
+
 int checkIngredient(int recipe[], int ingredient) {
 
 	if (sizeof(&recipe) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
+	if (ingredient > 8 || ingredient < 0) {
+		perror("Ingredient is not a valid ingredient")
+	}
 	else {
 		if (recipe[ingredient] == 1) {
 			return 1;
 		}
+
+		int ingredientSuccessfullyGotten = getIngredient(&recipe, ingredient);
+
+
 	}
 
 	return 0;
