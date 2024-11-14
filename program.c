@@ -102,7 +102,7 @@ int insertIntoSharedMemArray(struct sharedMem memoryAddress) {
 
 	sharedMemory.sharedMemoryAddresses = temp;
 	sharedMemory.sharedMemoryAddresses[sharedMemory.length++] = memoryAddress; // Add the new element
-	return 0; // Success   	
+	return 0; // Success
 }
 
 int initSharedMemory(struct sharedMem sharedMemory, int size) {
@@ -333,7 +333,7 @@ int* initRecipes(int recipe) {
 			initRecipe[BUTTER] = 1;
 		}
 
-		printf("Finised %d recipe\n", recipe);
+		printf("Finished %d recipe\n", recipe);
 		return initRecipe;
 	}
 }
@@ -341,7 +341,7 @@ int* initRecipes(int recipe) {
 
 int checkRecipe(int recipe[]) {
 
-	if (sizeof(recipe) != 9) {
+	if (sizeof(&recipe) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
@@ -357,7 +357,7 @@ int checkRecipe(int recipe[]) {
 }
 int checkIngredient(int recipe[], int ingredient) {
 
-	if (sizeof(recipe) != 9) {
+	if (sizeof(&recipe) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
@@ -382,22 +382,11 @@ int getAvailableIngredients(int* recipe) {
 	return 0;
 }
 
-int checkIngredient(int recipe[], int ingredient) {
-
-	if (recipe[ingredient] == 1) {
-		return 1;
-	}
-
-	return 0;
-}
-
-int getIngredient(int ingredient) {
-
-}
-
-int isARecipeRemaining(int[] recipes, int length) {
-	for (int i = 0; i < length; i++) {
-		if (recipes[i]) { return 1; }
+int isARecipeRemaining(int recipes[], int length) {
+	for (int i = 0; i < length; i++){
+		if (recipes[i]) {
+			return 1;
+		}
 	}
 
 	return 0;
@@ -423,12 +412,12 @@ void* simulateBaker(void* val) {
 	tools[BOWL] = 1;
 	tools[SPOON] = 1;
 
-	//Iterate through each of the recipes. 
+	//Iterate through each of the recipes.
 	int i = 0;
+
 	while (isARecipeRemaining(recipesRemaining, 5)) {
-		
 		i++;
-		i = i % 5
+		i = i % 5;
 
 		if (!recipesRemaining[i]) {
 			continue;
@@ -453,7 +442,7 @@ void* simulateBaker(void* val) {
 				break;
 
 			default:
-				printf("Invalid index for recipe found within simulateBaker.")
+				printf("Invalid index for recipe found within simulateBaker.");
 		}
 
 		int isRecipeComplete = getAvailableIngredients(currentRecipe);
