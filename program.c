@@ -382,6 +382,10 @@ int getAvailableIngredients(int* recipe) {
 	return 0;
 }
 
+int getIngredient(int ingredient) {
+
+}
+
 int isARecipeRemaining(int recipes[], int length) {
 	for (int i = 0; i < length; i++){
 		if (recipes[i]) {
