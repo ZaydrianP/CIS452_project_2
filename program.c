@@ -72,6 +72,17 @@ struct semaphoresStruct semaphores;
 
 struct sharedMemStruct sharedMemory;
 
+int isIn(int haystack[], int haystackSize, int* needle) {
+
+	for (int i = 0; i < haystackSize; i++) {
+		if (haystack[i] == needle) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 	if (resource >= semaphores.length) {
 		int* temp = realloc(semaphores.semaphoreIds, (resource + 1) * sizeof(int));
