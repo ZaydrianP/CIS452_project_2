@@ -356,9 +356,9 @@ int checkRecipe(int recipe[]) {
 	return 0;
 }
 
-int checkIngredient(int recipe[], int ingredient) {
+int checkIngredient(int* recipe, int ingredient) {
 
-	if (sizeof(&recipe) != 9) {
+	if (sizeof(*recipe) / sizeof(recipe[0]) != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
