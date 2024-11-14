@@ -310,6 +310,19 @@ void sigHandler(int signal) {
 
 }
 
+void decSemaphores(int resource) {
+	if (isIn(pantryIngredients, 6, resource)) {
+		useResource(pantrySemID);
+	}
+
+	if (isIn(refrigeratorIngredients, 3, resource)) {
+		useResource(refrigeratorSemID);
+	}
+
+	//useResource(ingredientSemId);
+	
+}
+
 int* initRecipes(int recipe) {
 	static int initRecipe[9];
 
