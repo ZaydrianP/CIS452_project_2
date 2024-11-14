@@ -26,8 +26,8 @@ const int MIXER = 0;
 const int BOWL = 1;
 const int SPOON = 2;
 
-const int PANTRY = 0;
-const int REFRIGERATOR = 1;
+const int PANTRY = 3;
+const int REFRIGERATOR = 4;
 
 const int OVEN = 5;
 
