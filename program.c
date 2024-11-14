@@ -451,7 +451,8 @@ int getAvailableIngredients(int* recipe) {
 }
 
 int getIngredient(int *recipe, int ingredient) {
-
+	decSemaphores(int ingredient);
+	addIngredient(recipe, ingredient)
 }
 
 int isARecipeRemaining(int recipes[], int length) {
