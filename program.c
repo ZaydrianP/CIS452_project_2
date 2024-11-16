@@ -72,39 +72,39 @@ struct semaphoresStruct semaphores;
 
 struct sharedMemStruct sharedMemory;
 
-typedef struct{
-    int ingredients[9];
+typedef struct {
+	int ingredients[9];
 } Refrigerator;
 
-void initializeRefrigerator(Refrigerator *fridge) {
-    fridge->ingredients[FLOUR] = 0;
-    fridge->ingredients[SUGAR] = 0;
-    fridge->ingredients[YEAST] = 0;
-    fridge->ingredients[BAKING_SODA] = 0;
-    fridge->ingredients[SALT] = 0;
-    fridge->ingredients[CINNAMON] = 0;
-    fridge->ingredients[EGGS] = 1;
-    fridge->ingredients[MILK] = 1;
-    fridge->ingredients[BUTTER] = 1;
+void initializeRefrigerator(Refrigerator* fridge) {
+	fridge->ingredients[FLOUR] = 0;
+	fridge->ingredients[SUGAR] = 0;
+	fridge->ingredients[YEAST] = 0;
+	fridge->ingredients[BAKING_SODA] = 0;
+	fridge->ingredients[SALT] = 0;
+	fridge->ingredients[CINNAMON] = 0;
+	fridge->ingredients[EGGS] = 1;
+	fridge->ingredients[MILK] = 1;
+	fridge->ingredients[BUTTER] = 1;
 }
 
-typedef struct{
-    int ingredients[9];
+typedef struct {
+	int ingredients[9];
 } Pantry;
 
-void initializePantry(Pantry *pantry) {
-    pantry->ingredients[FLOUR] = 1;
-    pantry->ingredients[SUGAR] = 1;
-    pantry->ingredients[YEAST] = 1;
-    pantry->ingredients[BAKING_SODA] = 1;
-    pantry->ingredients[SALT] = 1;
-    pantry->ingredients[CINNAMON] = 1;
-    pantry->ingredients[EGGS] = 0;
-    pantry->ingredients[MILK] = 0;
-    pantry->ingredients[BUTTER] = 0;
+void initializePantry(Pantry* pantry) {
+	pantry->ingredients[FLOUR] = 1;
+	pantry->ingredients[SUGAR] = 1;
+	pantry->ingredients[YEAST] = 1;
+	pantry->ingredients[BAKING_SODA] = 1;
+	pantry->ingredients[SALT] = 1;
+	pantry->ingredients[CINNAMON] = 1;
+	pantry->ingredients[EGGS] = 0;
+	pantry->ingredients[MILK] = 0;
+	pantry->ingredients[BUTTER] = 0;
 }
 
-int isIn(int haystack[], int haystackSize, int needle) {
+int isIn(const int haystack[], const int haystackSize, const int needle) {
 
 	for (int i = 0; i < haystackSize; i++) {
 		if (haystack[i] == needle) {
@@ -320,7 +320,7 @@ void decSemaphores(int resource) {
 	}
 
 	//useResource(ingredientSemId);
-	
+
 }
 
 int* initRecipes(int recipe) {
@@ -332,8 +332,7 @@ int* initRecipes(int recipe) {
 		exit(1);
 	}
 	else {
-		switch (recipe) {
-		case COOKIE:
+		if (recipe == COOKIE) {
 			initRecipe[FLOUR] = 1;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 0;
@@ -343,8 +342,8 @@ int* initRecipes(int recipe) {
 			initRecipe[EGGS] = 0;
 			initRecipe[MILK] = 1;
 			initRecipe[BUTTER] = 1;
-			break;
-		case PANCAKE:
+		}
+		if (recipe == PANCAKE) {
 			initRecipe[FLOUR] = 1;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 0;
@@ -354,8 +353,8 @@ int* initRecipes(int recipe) {
 			initRecipe[EGGS] = 1;
 			initRecipe[MILK] = 1;
 			initRecipe[BUTTER] = 1;
-			break;
-		case PIZZA:
+		}
+		if (recipe == PIZZA) {
 			initRecipe[FLOUR] = 0;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 1;
@@ -365,8 +364,8 @@ int* initRecipes(int recipe) {
 			initRecipe[EGGS] = 0;
 			initRecipe[MILK] = 0;
 			initRecipe[BUTTER] = 0;
-			break;
-		case PRETZEL:
+		}
+		if (recipe == PRETZEL) {
 			initRecipe[FLOUR] = 1;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 1;
@@ -376,8 +375,8 @@ int* initRecipes(int recipe) {
 			initRecipe[EGGS] = 1;
 			initRecipe[MILK] = 0;
 			initRecipe[BUTTER] = 0;
-			break;
-		case CINROLL:
+		}
+		if (recipe == CINROLL) {
 			initRecipe[FLOUR] = 1;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 0;
@@ -412,6 +411,19 @@ int checkRecipe(int recipe[]) {
 	return 0;
 }
 
+void addIngredient(int* recipe, int ingredient) {
+
+	if (recipe[ingredient] == 1) {
+		recipe[ingredient] = 0;
+	}
+}
+
+int getIngredient(int* recipe, int ingredient) {
+	decSemaphores(ingredient);
+	addIngredient(recipe, ingredient);
+	return 1;
+}
+
 //Return: Success of getting an ingredient
 int checkIngredient(int* recipe, int ingredient) {
 
@@ -420,29 +432,23 @@ int checkIngredient(int* recipe, int ingredient) {
 		exit(1);
 	}
 	if (ingredient > 8 || ingredient < 0) {
-		perror("Ingredient is not a valid ingredient")
+		perror("Ingredient is not a valid ingredient");
 	}
 	else {
 		if (recipe[ingredient] == 1) {
 			return 0;
 		}
 
-		return getIngredient(&recipe, ingredient);
+		return getIngredient(recipe, ingredient);
 
 	}
 
 	return 0;
 }
 
-void addIngredient(int *recipe, int ingredient) {
-
-	if (*recipe[ingredient] == 1) {
-		*recipe[ingredient] = 0;
-	}
-}
 // Return: If an ingredient was successfully gotten
 int getAvailableIngredients(int* recipe) {
-	int updated = 0
+	int updated = 0;
 	for (int i = 0; i < 9; i++) {
 		updated |= checkIngredient(recipe, i);
 	}
@@ -450,13 +456,8 @@ int getAvailableIngredients(int* recipe) {
 	return updated;
 }
 
-int getIngredient(int *recipe, int ingredient) {
-	decSemaphores(int ingredient);
-	addIngredient(recipe, ingredient)
-}
-
 int isARecipeRemaining(int recipes[], int length) {
-	for (int i = 0; i < length; i++){
+	for (int i = 0; i < length; i++) {
 		if (recipes[i]) {
 			return 1;
 		}
@@ -477,7 +478,7 @@ void* simulateBaker(void* val) {
 	int* softPretzel = initRecipes(PRETZEL);
 	int* cinnamonRoll = initRecipes(CINROLL);
 
-	int recipesRemaining[] = {1, 1, 1, 1, 1};
+	int recipesRemaining[] = { 1, 1, 1, 1, 1 };
 
 	//Setup tools
 	int tools[3];
@@ -496,33 +497,36 @@ void* simulateBaker(void* val) {
 			continue;
 		}
 
-		int* currentRecipe;
-		switch (i) {
-			case 0:
-				currentRecipe = cookie;
-				break;
-			case 1:
-				currentRecipe = pancake;
-				break;
-			case 2:
-				currentRecipe = pizzaDough;
-				break;
-			case 3:
-				currentRecipe = softPretzel;
-				break;
-			case 4:
-				currentRecipe = cinnamonRoll;
-				break;
+		int* currentRecipe = NULL;
+		if (i == COOKIE) {
+			currentRecipe = cookie;
+		}
+		
+		if (i == PANCAKE) {
+			currentRecipe = pancake;
+		}
+		
+		if (i == PIZZA) {
+			currentRecipe = pizzaDough;
+		}
 
-			default:
-				printf("Invalid index for recipe found within simulateBaker.");
+		if (i == PRETZEL) {
+			currentRecipe = softPretzel;
+		}
+		
+		if (i == CINROLL) {
+			currentRecipe = cinnamonRoll;
+		}
+
+		if(currentRecipe == NULL) {	
+			printf("Invalid index for recipe found within simulateBaker.");
 		}
 
 		int isRecipeComplete = getAvailableIngredients(currentRecipe);
 
 		if (isRecipeComplete) {
 			//Handle mixers...
-			
+
 			//Handle semaphores. 
 
 		}
