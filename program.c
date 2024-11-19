@@ -263,13 +263,26 @@ int useResource(int resource) {
 	sbuf.sem_op = -1;
 	sbuf.sem_flg = SEM_UNDO;
 
-	semop(semId, &sbuf, 1);
-	//TODO: Perform error checking...
-	//TODO: Perform critical section here...
+	if (semop(semId, &sbuf, 1) == -1) {
+		perror("Unable to use resource");
+	}
+		
+	return 0;
+}
 
+int recoverResource(int resource) {
+
+	int semId = getSemIdFromResource(resource);
+
+	struct sembuf sbuf;
+	sbuf.sem_num = 0;
 	sbuf.sem_op = 1;
-	semop(semId, &sbuf, 1);
+	sbuf.sem_flg = SEM_UNDO;
 
+	if (semop(semId, &sbuf, 1) == -1) {
+		perror("Unable to recover resource");
+	}
+	
 	return 0;
 }
 
@@ -310,21 +323,40 @@ void sigHandler(int signal) {
 
 }
 
-void decSemaphores(int resource) {
-	if (isIn(pantryIngredients, 6, resource)) {
-		useResource(pantrySemID);
+void decSemaphores(int bakerId, int ingredient) {
+	if (isIn(pantryIngredients, 6, ingredient)) {
+		printf("Baker %d is looking to enter the pantry\n", bakerId);
+		useResource(PANTRY);
+		printf("Baker %d entered the pantry\n", bakerId);
 	}
 
-	if (isIn(refrigeratorIngredients, 3, resource)) {
-		useResource(refrigeratorSemID);
+	if (isIn(refrigeratorIngredients, 3, ingredient)) {
+		printf("Baker %d is looking to enter the refrigerator\n", bakerId);
+		useResource(REFRIGERATOR);
+		printf("Baker %d entered the refrigerator\n", bakerId);
 	}
 
-	//useResource(ingredientSemId);
+	printf("Baker %d is waiting for ingredient %d\n", bakerId, ingredient);
+
+	//useIngredient(ingredientSemId);
 
 }
 
-int* initRecipes(int recipe) {
-	static int initRecipe[9];
+void incResourceSemaphores(int bakerId, int ingredient) {
+	if (isIn(pantryIngredients, 6, ingredient)) {
+		printf("Baker %d is looking to leave the pantry\n", bakerId);
+		recoverResource(PANTRY);
+		printf("Baker %d left the pantry\n", bakerId);
+	}
+
+	if (isIn(refrigeratorIngredients, 3, ingredient)) {
+		printf("Baker %d is looking to leave the refrigerator\n", bakerId);
+		recoverResource(REFRIGERATOR);
+		printf("Baker %d left the refrigerator\n", bakerId);
+	}
+}
+
+int* initRecipes(int recipe, int initRecipe[]) {
 
 	printf("Initializing %d recipe\n", recipe);
 	if (recipe < 0 || recipe > 4) {
@@ -333,6 +365,7 @@ int* initRecipes(int recipe) {
 	}
 	else {
 		if (recipe == COOKIE) {
+			printf("Initting a cookie\n");
 			initRecipe[FLOUR] = 1;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 0;
@@ -388,20 +421,19 @@ int* initRecipes(int recipe) {
 			initRecipe[BUTTER] = 1;
 		}
 
-		printf("Finished %d recipe\n", recipe);
+		printf("Finished initializing %d recipe\n", recipe);
 		return initRecipe;
 	}
 }
 
 
-int checkRecipe(int recipe[]) {
-
-	if (sizeof(&recipe) != 9) {
+int checkRecipe(int recipe[], int size) {
+	if (size != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
 	else {
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < size; i++) {
 			if (recipe[i] == 1) {
 				return 1;
 			}
@@ -418,16 +450,20 @@ void addIngredient(int* recipe, int ingredient) {
 	}
 }
 
-int getIngredient(int* recipe, int ingredient) {
-	decSemaphores(ingredient);
+int getIngredient(int bakerId, int* recipe, int ingredient) {
+	decSemaphores(bakerId, ingredient);
 	addIngredient(recipe, ingredient);
+	printf("Baker %d got ingredient %d\n", bakerId, ingredient);
+	
+	incResourceSemaphores(bakerId, ingredient);
+	
 	return 1;
 }
 
 //Return: Success of getting an ingredient
-int checkIngredient(int* recipe, int ingredient) {
+int checkIngredient(int bakerId, int* recipe, int size, int ingredient) {
 
-	if (sizeof(*recipe) / sizeof(recipe[0]) != 9) {
+	if (size != 9) {
 		perror("Not a valid recipe");
 		exit(1);
 	}
@@ -435,11 +471,11 @@ int checkIngredient(int* recipe, int ingredient) {
 		perror("Ingredient is not a valid ingredient");
 	}
 	else {
-		if (recipe[ingredient] == 1) {
+		if (recipe[ingredient] == 0) {
 			return 0;
 		}
 
-		return getIngredient(recipe, ingredient);
+		return getIngredient(bakerId, recipe, ingredient);
 
 	}
 
@@ -447,10 +483,10 @@ int checkIngredient(int* recipe, int ingredient) {
 }
 
 // Return: If an ingredient was successfully gotten
-int getAvailableIngredients(int* recipe) {
+int getAvailableIngredients(int bakerId, int* recipe) {
 	int updated = 0;
 	for (int i = 0; i < 9; i++) {
-		updated |= checkIngredient(recipe, i);
+		updated |= checkIngredient(bakerId, recipe, 9, i);
 	}
 
 	return updated;
@@ -469,14 +505,22 @@ int isARecipeRemaining(int recipes[], int length) {
 void* simulateBaker(void* val) {
 	//Put all baker logic in here
 	//NOTE: When this function terminates, it will reclaim memory from the thread
-	int* bakerId = (int*)val;
+	int* bakerIdRef = (int*)val;
+	int bakerId = *bakerIdRef;
 
 	//Setup recipes
-	int* cookie = initRecipes(COOKIE);
-	int* pancake = initRecipes(PANCAKE);
-	int* pizzaDough = initRecipes(PIZZA);
-	int* softPretzel = initRecipes(PRETZEL);
-	int* cinnamonRoll = initRecipes(CINROLL);
+	//TODO: Fix init recipe array
+	int cookieArray[9] = {};
+	int pancakeArray[9];
+	int pizzaDoughArray[9];
+	int softPretzelArray[9];
+	int cinnamonRollArray[9];
+
+	int *cookie = initRecipes(COOKIE, cookieArray);
+	int *pancake = initRecipes(PANCAKE, pancakeArray);
+	int *pizzaDough = initRecipes(PIZZA, pizzaDoughArray);
+	int *softPretzel = initRecipes(PRETZEL, softPretzelArray);
+	int *cinnamonRoll = initRecipes(CINROLL, cinnamonRollArray);
 
 	int recipesRemaining[] = { 1, 1, 1, 1, 1 };
 
@@ -490,50 +534,61 @@ void* simulateBaker(void* val) {
 	int i = 0;
 
 	while (isARecipeRemaining(recipesRemaining, 5)) {
-		i++;
-		i = i % 5;
-
+		
 		if (!recipesRemaining[i]) {
+			i++;
+			i = i % 5;
 			continue;
 		}
 
 		int* currentRecipe = NULL;
 		if (i == COOKIE) {
 			currentRecipe = cookie;
+			printf("Baker %d is working on making Cookies\n", bakerId);
 		}
-		
+
 		if (i == PANCAKE) {
 			currentRecipe = pancake;
+			printf("Baker %d is working on making Pancakes\n", bakerId);
 		}
-		
+
 		if (i == PIZZA) {
 			currentRecipe = pizzaDough;
+			printf("Baker %d is working on making Pizza Dough\n", bakerId);
 		}
 
 		if (i == PRETZEL) {
 			currentRecipe = softPretzel;
+			printf("Baker %d is working on making Soft Pretzels\n", bakerId);
 		}
-		
+
 		if (i == CINROLL) {
 			currentRecipe = cinnamonRoll;
+			printf("Baker %d is working on making Cinnamon Rolls\n", bakerId);
 		}
 
-		if(currentRecipe == NULL) {	
-			printf("Invalid index for recipe found within simulateBaker.");
+		if (currentRecipe == NULL) {
+			printf("Invalid index for recipe found within simulateBaker\n");
 		}
 
-		int isRecipeComplete = getAvailableIngredients(currentRecipe);
-
-		if (isRecipeComplete) {
+		int isRecipeComplete = getAvailableIngredients(bakerId, currentRecipe);
+		recipesRemaining[i] = !isRecipeComplete;
+		
+		//if (isRecipeComplete) {
 			//Handle mixers...
 
 			//Handle semaphores. 
 
-		}
-	}
+		//}
+		
+		i++;
+		i = i % 5;
 
-	free(bakerId);
-	printf("Baker has finished\n");
+	}
+	
+	printf("Baker %d has finished\n", bakerId);
+
+	free(bakerIdRef);
 	return NULL;
 }
 
@@ -542,6 +597,8 @@ void spawnThread(int bakerId) {
 
 	int* id = malloc(sizeof(int));
 	*id = bakerId;
+
+	printf("Initializing baker %d\n", *id);
 
 	int threadStatus = pthread_create(&thread, NULL, simulateBaker, id);
 
@@ -555,7 +612,7 @@ void spawnThread(int bakerId) {
 }
 
 void spawnThreads(int n) {
-
+	printf("Initializing %d bakers\n", n);
 	//for(int bakerId = 1; bakerId <= n; bakerId++) {
 	for (int bakerId = 0; bakerId < n; bakerId++) {
 		spawnThread(bakerId);
