@@ -342,7 +342,7 @@ void decSemaphores(int bakerId, int ingredient) {
 
 }
 
-void incResourceSemaphores(int bakerId, int ingredient) {
+void incIngredientSemaphores(int bakerId, int ingredient) {
 	if (isIn(pantryIngredients, 6, ingredient)) {
 		printf("Baker %d is looking to leave the pantry\n", bakerId);
 		recoverResource(PANTRY);
@@ -455,7 +455,7 @@ int getIngredient(int bakerId, int* recipe, int ingredient) {
 	addIngredient(recipe, ingredient);
 	printf("Baker %d got ingredient %d\n", bakerId, ingredient);
 	
-	incResourceSemaphores(bakerId, ingredient);
+	incIngredientSemaphores(bakerId, ingredient);
 	
 	return 1;
 }
@@ -498,6 +498,65 @@ int isARecipeRemaining(int recipes[], int length) {
 			return 1;
 		}
 	}
+
+	return 0;
+}
+
+int getMixingResources(int bakerId, int* tools, int size) {
+	if (size != 3) {
+		perror("Not a valid set of tools");
+	}
+
+	printf("Baker %d is looking to aquire a mixer\n", bakerId);
+	tools[MIXER] = useResource(MIXER);
+	printf("Baker %d aquired a mixer\n", bakerId);
+
+	printf("Baker %d is looking to aquire a bowl\n", bakerId);
+	tools[MIXER] = useResource(BOWL);
+	printf("Baker %d aquired a bowl\n", bakerId);
+
+	printf("Baker %d is looking to aquire as spoon\n", bakerId);
+	tools[MIXER] = useResource(SPOON);
+	printf("Baker %d aquired a spoon\n", bakerId);
+
+	return 0;
+}
+
+int returnMixingResources(int bakerId) {
+	recoverResource(MIXER);
+	recoverResource(BOWL);
+	recoverResource(SPOON);
+
+	return 0;
+}
+
+int mixIngredients(int bakerId, int* tools, int size) {
+	getMixingResources(bakerId, tools, size);
+
+	printf("Baker %d is mixing the ingredients together\n", bakerId);
+
+	sleep(1);
+
+	printf("Baker %d mixed all of the ingredients together\n", bakerId);
+
+	returnMixingResources(bakerId); 
+
+	return 0;
+}
+
+
+int cookRecipe(int bakerId, int recipe) {
+	printf("Baker %d is looking to use the oven to cook recipe %d\n", bakerId, recipe);
+
+	useResource(OVEN);
+
+	printf("Baker %d is using the oven to cook recipe %d\n", bakerId, recipe);
+
+	sleep(1);
+
+	printf("Baker %d finished using the oven to cook recipe %d\n", bakerId, recipe);
+
+	recoverResource(OVEN);
 
 	return 0;
 }
@@ -574,12 +633,14 @@ void* simulateBaker(void* val) {
 		int isRecipeComplete = getAvailableIngredients(bakerId, currentRecipe);
 		recipesRemaining[i] = !isRecipeComplete;
 		
-		//if (isRecipeComplete) {
-			//Handle mixers...
+		if (isRecipeComplete) {
+			mixIngredients(bakerId, tools, 3);
 
-			//Handle semaphores. 
+			cookRecipe(bakerId, i);
 
-		//}
+			printf("Baker %d finished recipe %d\n", bakerId, i);
+
+		}
 		
 		i++;
 		i = i % 5;
