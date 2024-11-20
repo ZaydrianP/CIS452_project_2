@@ -53,6 +53,18 @@ int bowlSemID;
 int spoonSemID;
 int ovenSemID;
 
+int semOffset = OVEN + 1;
+
+int flourSemId;
+int sugarSemId;
+int yeastSemId;
+int bakingSodaSemId;
+int saltSemId;
+int cinnamonSemId;
+int eggsSemId;
+int milkSemId;
+int butterSemId;
+
 struct semaphoresStruct {
 	int length;
 	int* semaphoreIds;
@@ -135,17 +147,29 @@ int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 }
 //TODO: Adjust this function based on what the sharedMemory represents.
 int insertIntoSharedMemArray(struct sharedMem memoryAddress) {
+
 	struct sharedMem* temp = realloc(sharedMemory.sharedMemoryAddresses,
+
 		(sharedMemory.length + 1) * sizeof(struct sharedMem));
 
+
+
 	if (temp == NULL) {
+
 		perror("Failed to allocate memory for sharedMemoryAddresses");
+
 		return -1; // Memory allocation failure
+
 	}
 
+
+
 	sharedMemory.sharedMemoryAddresses = temp;
+
 	sharedMemory.sharedMemoryAddresses[sharedMemory.length++] = memoryAddress; // Add the new element
+
 	return 0; // Success
+
 }
 
 int initSharedMemory(struct sharedMem sharedMemory, int size) {
@@ -254,9 +278,7 @@ int getSemIdFromResource(int resource) {
 	return semaphores.semaphoreIds[resource];
 }
 
-int useResource(int resource) {
-
-	int semId = getSemIdFromResource(resource);
+int decSem(int semId) {
 
 	struct sembuf sbuf;
 	sbuf.sem_num = 0;
@@ -266,24 +288,47 @@ int useResource(int resource) {
 	if (semop(semId, &sbuf, 1) == -1) {
 		perror("Unable to use resource");
 	}
-		
+
 	return 0;
 }
 
-int recoverResource(int resource) {
-
-	int semId = getSemIdFromResource(resource);
-
+int incSem(int semId) {
 	struct sembuf sbuf;
 	sbuf.sem_num = 0;
 	sbuf.sem_op = 1;
 	sbuf.sem_flg = SEM_UNDO;
 
 	if (semop(semId, &sbuf, 1) == -1) {
-		perror("Unable to recover resource");
+		perror("Unable to use resource");
 	}
-	
+
 	return 0;
+}
+
+int useResource(int resource) {
+
+	int semId = getSemIdFromResource(resource);
+
+	return decSem(semId);
+
+}
+int useIngredient(int ingredient) {
+	int semId = getSemIdFromResource(semOffset + ingredient);
+
+	return decSem(semId);
+}
+
+int recoverResource(int resource) {
+
+	int semId = getSemIdFromResource(resource);
+
+	return incSem(semId);
+}
+
+int recoverIngredient(int ingredient) {
+	int semId = getSemIdFromResource(semOffset + ingredient);
+
+	return incSem(semId);
 }
 
 int isPantryItem(int item) {
@@ -338,7 +383,7 @@ void decSemaphores(int bakerId, int ingredient) {
 
 	printf("Baker %d is waiting for ingredient %d\n", bakerId, ingredient);
 
-	//useIngredient(ingredientSemId);
+	useIngredient(ingredient);
 
 }
 
@@ -354,6 +399,9 @@ void incIngredientSemaphores(int bakerId, int ingredient) {
 		recoverResource(REFRIGERATOR);
 		printf("Baker %d left the refrigerator\n", bakerId);
 	}
+
+	recoverIngredient(ingredient);
+
 }
 
 int* initRecipes(int recipe, int initRecipe[]) {
@@ -454,9 +502,13 @@ int getIngredient(int bakerId, int* recipe, int ingredient) {
 	decSemaphores(bakerId, ingredient);
 	addIngredient(recipe, ingredient);
 	printf("Baker %d got ingredient %d\n", bakerId, ingredient);
-	
+
+	sleep(1);
+
+	printf("Baker %d is returning ingredient %d\n", bakerId, ingredient);
+
 	incIngredientSemaphores(bakerId, ingredient);
-	
+
 	return 1;
 }
 
@@ -539,7 +591,7 @@ int mixIngredients(int bakerId, int* tools, int size) {
 
 	printf("Baker %d mixed all of the ingredients together\n", bakerId);
 
-	returnMixingResources(bakerId); 
+	returnMixingResources(bakerId);
 
 	return 0;
 }
@@ -552,7 +604,7 @@ int cookRecipe(int bakerId, int recipe) {
 
 	printf("Baker %d is using the oven to cook recipe %d\n", bakerId, recipe);
 
-	sleep(1);
+	sleep(3);
 
 	printf("Baker %d finished using the oven to cook recipe %d\n", bakerId, recipe);
 
@@ -575,11 +627,11 @@ void* simulateBaker(void* val) {
 	int softPretzelArray[9];
 	int cinnamonRollArray[9];
 
-	int *cookie = initRecipes(COOKIE, cookieArray);
-	int *pancake = initRecipes(PANCAKE, pancakeArray);
-	int *pizzaDough = initRecipes(PIZZA, pizzaDoughArray);
-	int *softPretzel = initRecipes(PRETZEL, softPretzelArray);
-	int *cinnamonRoll = initRecipes(CINROLL, cinnamonRollArray);
+	int* cookie = initRecipes(COOKIE, cookieArray);
+	int* pancake = initRecipes(PANCAKE, pancakeArray);
+	int* pizzaDough = initRecipes(PIZZA, pizzaDoughArray);
+	int* softPretzel = initRecipes(PRETZEL, softPretzelArray);
+	int* cinnamonRoll = initRecipes(CINROLL, cinnamonRollArray);
 
 	int recipesRemaining[] = { 1, 1, 1, 1, 1 };
 
@@ -593,7 +645,7 @@ void* simulateBaker(void* val) {
 	int i = 0;
 
 	while (isARecipeRemaining(recipesRemaining, 5)) {
-		
+
 		if (!recipesRemaining[i]) {
 			i++;
 			i = i % 5;
@@ -632,7 +684,7 @@ void* simulateBaker(void* val) {
 
 		int isRecipeComplete = getAvailableIngredients(bakerId, currentRecipe);
 		recipesRemaining[i] = !isRecipeComplete;
-		
+
 		if (isRecipeComplete) {
 			mixIngredients(bakerId, tools, 3);
 
@@ -641,12 +693,12 @@ void* simulateBaker(void* val) {
 			printf("Baker %d finished recipe %d\n", bakerId, i);
 
 		}
-		
+
 		i++;
 		i = i % 5;
 
 	}
-	
+
 	printf("Baker %d has finished\n", bakerId);
 
 	free(bakerIdRef);
@@ -691,8 +743,16 @@ int main() {
 	spoonSemID = initSemaphore(SPOON, 5);
 	ovenSemID = initSemaphore(OVEN, 1);
 
-	int bakers = -1;
+	flourSemId = initSemaphore(semOffset + FLOUR, 1);
+	sugarSemId = initSemaphore(semOffset + SUGAR, 1);
+	bakingSodaSemId = initSemaphore(semOffset + BAKING_SODA, 1);
+	saltSemId = initSemaphore(semOffset + SALT, 1);
+	cinnamonSemId = initSemaphore(semOffset + CINNAMON, 1);
+	eggsSemId = initSemaphore(semOffset + EGGS, 2);
+	milkSemId = initSemaphore(semOffset + MILK, 2);
+	butterSemId = initSemaphore(semOffset + BUTTER, 2);
 
+	int bakers = -1;
 
 	while (bakers < 0) {
 		printf("How many bakers would you like\n");
