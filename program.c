@@ -162,7 +162,7 @@ int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 
 }
 //TODO: Adjust this function based on what the sharedMemory represents.
-int insertIntoSharedMemArray(struct sharedMem memoryAddress) {
+int insertIntoSharedMemArray(struct sharedMem *memoryAddress) {
 
 	struct sharedMem* temp = realloc(sharedMemory.sharedMemoryAddresses,
 
@@ -182,37 +182,37 @@ int insertIntoSharedMemArray(struct sharedMem memoryAddress) {
 
 	sharedMemory.sharedMemoryAddresses = temp;
 
-	sharedMemory.sharedMemoryAddresses[sharedMemory.length++] = memoryAddress; // Add the new element
+	sharedMemory.sharedMemoryAddresses[sharedMemory.length++] = *memoryAddress; // Add the new element
 
 	return 0; // Success
 
 }
 
-int initSharedMemory(struct sharedMem sharedMemory, key_t key, int size) {
+int initSharedMemory(struct sharedMem *sharedMemory, key_t key, int size) {
 
-        sharedMemory.id = shmget(key, size, IPC_CREAT | S_IRUSR | S_IWUSR);
+	sharedMemory->id = shmget(key, size, IPC_CREAT | S_IRUSR | S_IWUSR);
 
-        if (sharedMemory.id < 0) {
+	if (sharedMemory->id < 0) {
 
-                perror("Unable to obtain shared memory\n");
+		perror("Unable to obtain shared memory\n");
 
-                exit(1);
+		exit(1);
 
-        }
+	}
 
-        sharedMemory.address = shmat(sharedMemory.id, 0, 0);
+	sharedMemory->address = shmat(sharedMemory->id, 0, 0);
 
-        if (sharedMemory.address == (void*)-1) {
+	if (sharedMemory->address == (void*)-1) {
 
-                perror("Unable to attach\n");
+		perror("Unable to attach\n");
 
-                exit(1);
+		exit(1);
 
-        }
+	}
 
-        insertIntoSharedMemArray(sharedMemory);
+	insertIntoSharedMemArray(sharedMemory);
 
-        return 0;
+	return 0;
 }
 
 int cleanupSharedMemoryAddress(struct sharedMem* sharedMemory) {
@@ -636,7 +636,7 @@ void* simulateBaker(void* val) {
 	int bakerId = *bakerIdRef;
 
 	//Setup recipes
-	//TODO: Fix init recipe array
+
 	int cookieArray[9] = {};
 	int pancakeArray[9];
 	int pizzaDoughArray[9];
@@ -702,6 +702,7 @@ void* simulateBaker(void* val) {
 		recipesRemaining[i] = !isRecipeComplete;
 
 		if (isRecipeComplete) {
+			//Check if the baker is getting ramsied here. If they are, we only need to reset the array
 			mixIngredients(bakerId, tools, 3);
 
 			cookRecipe(bakerId, i);
@@ -721,15 +722,14 @@ void* simulateBaker(void* val) {
 	return NULL;
 }
 
-void spawnThread(int bakerId) {
-	pthread_t thread;
+void spawnThread(pthread_t *thread, int bakerId) {
 
 	int* id = malloc(sizeof(int));
 	*id = bakerId;
 
 	printf("Initializing baker %d\n", *id);
 
-	int threadStatus = pthread_create(&thread, NULL, simulateBaker, id);
+	int threadStatus = pthread_create(thread, NULL, simulateBaker, id);
 
 	if (threadStatus != 0) {
 		fprintf(stderr, "Thread create error %d: %s\n", threadStatus, strerror(threadStatus));
@@ -737,17 +737,24 @@ void spawnThread(int bakerId) {
 		exit(1);
 	}
 
-	pthread_detach(thread);
+//	pthread_detach(*thread);
 }
 
-void spawnThreads(int n) {
+void spawnThreads(pthread_t* threads, int n) {
 	printf("Initializing %d bakers\n", n);
 	//for(int bakerId = 1; bakerId <= n; bakerId++) {
 	for (int bakerId = 0; bakerId < n; bakerId++) {
-		spawnThread(bakerId);
+		spawnThread(&threads[bakerId], bakerId);
 	}
 
 }
+
+void waitForThreads(pthread_t* threads, int size) {
+	for(int i = 0; i < size; i++) {
+		pthread_join(threads[i], NULL);	
+	}
+}
+
 int main() {
 	signal(SIGINT, sigHandler);	
 
@@ -772,7 +779,7 @@ int main() {
 	struct sharedMem sharedMemory;
 	key_t key = ftok("./program.c", 0);
 
-	initSharedMemory(sharedMemory, key, 2 * sizeof(int));
+	initSharedMemory(&sharedMemory, key, 2 * sizeof(int));
 
 
 	while(1) {
@@ -790,17 +797,15 @@ int main() {
 		//Create n threads, with each one representing a baker.
 		srand(time(NULL));
 
-		sharedMemory[0] = rand % bakers; 
-		sharedMemory[1] = rand % 5;
+		sharedMemory.address[0] = rand() % bakers; 
+		sharedMemory.address[1] = rand() % 5;
 
-		spawnThreads(bakers);
+		pthread_t threads[bakers];
+		spawnThreads(threads, bakers);
 
-
-
-		//Busy waiting. Makes the only way for program to end via termination
+		waitForThreads(threads, bakers);
+		printf("All bakers have finished\n");
 	}
-
-	printf("Program finished");
 
 	return 0;
 
