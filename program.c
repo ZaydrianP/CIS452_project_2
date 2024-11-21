@@ -172,31 +172,31 @@ int insertIntoSharedMemArray(struct sharedMem memoryAddress) {
 
 }
 
-int initSharedMemory(struct sharedMem sharedMemory, int size) {
+int initSharedMemory(struct sharedMem sharedMemory, key_t key, int size) {
 
-	sharedMemory.id = shmget(IPC_PRIVATE, size, IPC_CREAT | S_IRUSR | S_IWUSR);
+        sharedMemory.id = shmget(key, size, IPC_CREAT | S_IRUSR | S_IWUSR);
 
-	if (sharedMemory.id < 0) {
+        if (sharedMemory.id < 0) {
 
-		perror("Unable to obtain shared memory\n");
+                perror("Unable to obtain shared memory\n");
 
-		exit(1);
+                exit(1);
 
-	}
+        }
 
-	sharedMemory.address = shmat(sharedMemory.id, 0, 0);
+        sharedMemory.address = shmat(sharedMemory.id, 0, 0);
 
-	if (sharedMemory.address == (void*)-1) {
+        if (sharedMemory.address == (void*)-1) {
 
-		perror("Unable to attach\n");
+                perror("Unable to attach\n");
 
-		exit(1);
+                exit(1);
 
-	}
+        }
 
-	insertIntoSharedMemArray(sharedMemory);
+        insertIntoSharedMemArray(sharedMemory);
 
-	return 0;
+        return 0;
 }
 
 int cleanupSharedMemoryAddress(struct sharedMem* sharedMemory) {
@@ -732,9 +732,8 @@ void spawnThreads(int n) {
 	}
 
 }
-
 int main() {
-	signal(SIGINT, sigHandler);
+	signal(SIGINT, sigHandler);	
 
 	mixerSemID = initSemaphore(MIXER, 2);
 	pantrySemID = initSemaphore(PANTRY, 1);
@@ -745,6 +744,7 @@ int main() {
 
 	flourSemId = initSemaphore(semOffset + FLOUR, 1);
 	sugarSemId = initSemaphore(semOffset + SUGAR, 1);
+	yeastSemId = initSemaphore(semOffset + YEAST, 1);
 	bakingSodaSemId = initSemaphore(semOffset + BAKING_SODA, 1);
 	saltSemId = initSemaphore(semOffset + SALT, 1);
 	cinnamonSemId = initSemaphore(semOffset + CINNAMON, 1);
@@ -752,24 +752,35 @@ int main() {
 	milkSemId = initSemaphore(semOffset + MILK, 2);
 	butterSemId = initSemaphore(semOffset + BUTTER, 2);
 
-	int bakers = -1;
+	//Write to shared memory the baker and the recipe to get ramsied.
+	struct sharedMem sharedMemory;
+	key_t key = ftok("./program.c", 0);
 
-	while (bakers < 0) {
-		printf("How many bakers would you like\n");
+	initSharedMemory(sharedMemory, key, 2 * sizeof(int));
 
-		scanf("%d", &bakers);
-		if (bakers < 0) {
-			printf("Please provide a valid number of bakers.");
+
+	while(1) {
+		int bakers = -1;
+
+		while (bakers < 0) {
+			printf("How many bakers would you like\n");
+
+			scanf("%d", &bakers);
+			if (bakers < 0) {
+				printf("Please provide a valid number of bakers.");
+			}
 		}
-	}
 
-	//Create n threads, with each one representing a baker.
-	//struct sharedMem mem;
-	//initSharedMemory(mem, sizeof(char));
-	spawnThreads(bakers);
+		//Create n threads, with each one representing a baker.
+		srand(time(NULL));
+
+		sharedMemory[0] = rand % bakers; 
+		sharedMemory[1] = rand % 5;
+
+		spawnThreads(bakers);
 
 
-	while (1) {
+
 		//Busy waiting. Makes the only way for program to end via termination
 	}
 
