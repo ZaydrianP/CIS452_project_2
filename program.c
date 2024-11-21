@@ -65,6 +65,22 @@ int eggsSemId;
 int milkSemId;
 int butterSemId;
 
+const char *red = "\x1b[31m";
+const char *green = "\x1b[32m";
+const char *yellow = "\x1b[33m";
+const char *blue = "\x1b[34m";
+const char *magenta = "\x1b[35m";
+const char *cyan = "\x1b[36m";
+const char *reset_color = "\x1b[0m";
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 struct semaphoresStruct {
 	int length;
 	int* semaphoreIds;
