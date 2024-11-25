@@ -1,3 +1,5 @@
+
+
 #include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
@@ -11,6 +13,7 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/sem.h>
+
 
 const int FLOUR = 0;
 const int SUGAR = 1;
@@ -81,16 +84,39 @@ const char *reset_color = "\x1b[0m";
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+/**
+ * @struct semaphoresStruct
+ * @brief A structure to hold semaphore information.
+ *
+ * This structure contains information about semaphores, including the number
+ * of semaphores and an array of semaphore IDs.
+ *
+ * @var semaphoresStruct::length
+ * The number of semaphores.
+ *
+ * @var semaphoresStruct::semaphoreIds
+ * A pointer to an array of semaphore IDs.
+ */
 struct semaphoresStruct {
 	int length;
 	int* semaphoreIds;
 };
 
+/**
+ * struct sharedMem - Structure to represent shared memory.
+ * @id: An integer representing the identifier for the shared memory.
+ * @address: A pointer to a long integer representing the address of the shared memory.
+ */
 struct sharedMem {
 	int id;
 	long int* address;
 };
 
+/**
+ * struct sharedMemStruct - A structure to hold shared memory information.
+ * @length: The number of shared memory addresses.
+ * @sharedMemoryAddresses: A pointer to an array of shared memory addresses.
+ */
 struct sharedMemStruct {
 	int length;
 	struct sharedMem* sharedMemoryAddresses;
@@ -100,10 +126,24 @@ struct semaphoresStruct semaphores;
 
 struct sharedMemStruct sharedMemory;
 
+/**
+ * @brief A structure representing a refrigerator.
+ * 
+ * This structure contains an array of integers representing the ingredients
+ * stored in the refrigerator. Each element in the array corresponds to a 
+ * specific ingredient.
+ */
 typedef struct {
 	int ingredients[9];
 } Refrigerator;
 
+/**
+ * @brief Initializes the ingredients in the refrigerator to their default values.
+ *
+ * This function sets the quantities of various ingredients in the refrigerator to their initial values.
+ *
+ * @param fridge A pointer to the Refrigerator structure to be initialized.
+ */
 void initializeRefrigerator(Refrigerator* fridge) {
 	fridge->ingredients[FLOUR] = 0;
 	fridge->ingredients[SUGAR] = 0;
@@ -116,10 +156,22 @@ void initializeRefrigerator(Refrigerator* fridge) {
 	fridge->ingredients[BUTTER] = 1;
 }
 
+/**
+ * @brief A structure representing a pantry with a fixed number of ingredients.
+ * 
+ * This structure is used to store the quantities of up to 9 different ingredients.
+ */
 typedef struct {
 	int ingredients[9];
 } Pantry;
 
+/**
+ * @brief Initializes the pantry with default ingredient quantities.
+ *
+ * This function sets the initial quantities of various ingredients in the pantry.
+ *
+ * @param pantry A pointer to the Pantry structure to be initialized.
+ */
 void initializePantry(Pantry* pantry) {
 	pantry->ingredients[FLOUR] = 1;
 	pantry->ingredients[SUGAR] = 1;
@@ -132,6 +184,14 @@ void initializePantry(Pantry* pantry) {
 	pantry->ingredients[BUTTER] = 0;
 }
 
+/**
+ * Checks if a given integer is present in an array.
+ *
+ * @param haystack An array of integers to search within.
+ * @param haystackSize The size of the haystack array.
+ * @param needle The integer value to search for in the haystack array.
+ * @return Returns 1 if the needle is found in the haystack array, otherwise returns 0.
+ */
 int isIn(const int haystack[], const int haystackSize, const int needle) {
 
 	for (int i = 0; i < haystackSize; i++) {
@@ -143,6 +203,17 @@ int isIn(const int haystack[], const int haystackSize, const int needle) {
 	return 0;
 }
 
+/**
+ * @brief Inserts a semaphore ID into the semaphore array at the specified resource index.
+ *
+ * This function ensures that the semaphore array is large enough to accommodate the specified
+ * resource index. If the array is not large enough, it reallocates memory to expand the array.
+ * If memory allocation fails, it returns an error code.
+ *
+ * @param resource The index in the semaphore array where the semaphore ID should be inserted.
+ * @param semaphoreId The semaphore ID to be inserted into the array.
+ * @return int Returns 0 on success, or -1 if memory allocation fails.
+ */
 int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 	if (resource >= semaphores.length) {
 		int* temp = realloc(semaphores.semaphoreIds, (resource + 1) * sizeof(int));
@@ -162,6 +233,15 @@ int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 
 }
 //TODO: Adjust this function based on what the sharedMemory represents.
+/**
+ * @brief Inserts a new element into the shared memory array.
+ *
+ * This function reallocates memory for the shared memory array to accommodate
+ * a new element, then inserts the provided element into the array.
+ *
+ * @param memoryAddress Pointer to the sharedMem structure to be inserted.
+ * @return int Returns 0 on success, or -1 if memory allocation fails.
+ */
 int insertIntoSharedMemArray(struct sharedMem *memoryAddress) {
 
 	struct sharedMem* temp = realloc(sharedMemory.sharedMemoryAddresses,
@@ -188,6 +268,17 @@ int insertIntoSharedMemArray(struct sharedMem *memoryAddress) {
 
 }
 
+/**
+ * @brief Initializes shared memory segment.
+ *
+ * This function creates a shared memory segment with the specified key and size,
+ * attaches it to the process's address space, and inserts it into the shared memory array.
+ *
+ * @param sharedMemory Pointer to the sharedMem structure to be initialized.
+ * @param key The key to be used for the shared memory segment.
+ * @param size The size of the shared memory segment.
+ * @return Returns 0 on success, exits the program on failure.
+ */
 int initSharedMemory(struct sharedMem *sharedMemory, key_t key, int size) {
 
 	sharedMemory->id = shmget(key, size, IPC_CREAT | S_IRUSR | S_IWUSR);
@@ -215,6 +306,17 @@ int initSharedMemory(struct sharedMem *sharedMemory, key_t key, int size) {
 	return 0;
 }
 
+/**
+ * @brief Cleans up the shared memory by detaching and deallocating it.
+ *
+ * This function detaches the shared memory segment from the address space of the calling process
+ * and then deallocates the shared memory segment. If either operation fails, an error message is
+ * printed and the program exits with a status of 1.
+ *
+ * @param sharedMemory A pointer to the sharedMem structure that contains the shared memory segment's
+ *                     address and identifier.
+ * @return Returns 0 on successful cleanup of the shared memory.
+ */
 int cleanupSharedMemoryAddress(struct sharedMem* sharedMemory) {
 	if (shmdt(sharedMemory->address) < 0) {
 
@@ -235,6 +337,16 @@ int cleanupSharedMemoryAddress(struct sharedMem* sharedMemory) {
 	return 0;
 }
 
+/**
+ * Initializes a semaphore with a given resource count.
+ *
+ * This function creates a new semaphore, sets its initial value, and inserts it into a semaphore array.
+ *
+ * @param resource The resource identifier to associate with the semaphore.
+ * @param resourceCount The initial count/value for the semaphore.
+ * @return The semaphore ID on success.
+ * @retval -1 on failure to create or initialize the semaphore.
+ */
 int initSemaphore(int resource, int resourceCount) {
 
 	int semId = semget(IPC_PRIVATE, 1, 00600);
@@ -256,6 +368,15 @@ int initSemaphore(int resource, int resourceCount) {
 	return semId;
 }
 
+/**
+ * @brief Cleans up and removes a semaphore set.
+ *
+ * This function attempts to remove a semaphore set identified by the given semaphore ID.
+ * If the removal fails, an error message is printed to standard error.
+ *
+ * @param semId The identifier of the semaphore set to be removed.
+ * @return Returns 0 on success. Note: Error checking and handling need to be added.
+ */
 int cleanupSemaphore(int semId) {
 	if (semctl(semId, 0, IPC_RMID) == -1) {
 		perror("Failed to remove semaphores");
@@ -264,6 +385,15 @@ int cleanupSemaphore(int semId) {
 	return 0;
 }
 
+/**
+ * @brief Cleans up all semaphores by releasing their resources.
+ *
+ * This function iterates through all semaphore IDs stored in the `semaphores` structure,
+ * calls `cleanupSemaphore` on each one to release its resources, and then frees the memory
+ * allocated for the semaphore IDs array.
+ *
+ * @return Returns 0 upon successful cleanup.
+ */
 int cleanupSemaphores() {
 
 	int length = semaphores.length;
@@ -276,6 +406,16 @@ int cleanupSemaphores() {
 
 }
 
+/**
+ * @brief Cleans up shared memory by iterating through each shared memory address
+ *        and freeing the allocated memory.
+ *
+ * This function iterates through the shared memory addresses stored in the
+ * sharedMemory structure, calls the cleanupSharedMemoryAddress function for
+ * each address, and then frees the memory allocated for the shared memory addresses.
+ *
+ * @return Returns 0 upon successful cleanup.
+ */
 int cleanupSharedMemory() {
 
 	int length = sharedMemory.length;
@@ -290,10 +430,28 @@ int cleanupSharedMemory() {
 
 }
 
+/**
+ * @brief Retrieves the semaphore ID associated with a given resource.
+ *
+ * This function takes a resource identifier as input and returns the
+ * corresponding semaphore ID from the semaphores structure.
+ *
+ * @param resource The identifier of the resource for which the semaphore ID is needed.
+ * @return The semaphore ID associated with the specified resource.
+ */
 int getSemIdFromResource(int resource) {
 	return semaphores.semaphoreIds[resource];
 }
 
+/**
+ * @brief Decrements the semaphore value.
+ *
+ * This function performs a semaphore operation to decrement the semaphore
+ * value by 1. It uses the `semop` system call to perform the operation.
+ *
+ * @param semId The semaphore ID.
+ * @return Returns 0 on success, or prints an error message if the operation fails.
+ */
 int decSem(int semId) {
 
 	struct sembuf sbuf;
@@ -308,6 +466,15 @@ int decSem(int semId) {
 	return 0;
 }
 
+/**
+ * @brief Increment a semaphore.
+ *
+ * This function increments the semaphore specified by the semaphore ID (semId).
+ * It uses the semop system call to perform the increment operation.
+ *
+ * @param semId The ID of the semaphore to increment.
+ * @return Returns 0 on success. If the semop call fails, an error message is printed.
+ */
 int incSem(int semId) {
 	struct sembuf sbuf;
 	sbuf.sem_num = 0;
@@ -321,6 +488,15 @@ int incSem(int semId) {
 	return 0;
 }
 
+/**
+ * @brief Uses a resource by decrementing its associated semaphore.
+ *
+ * This function retrieves the semaphore ID associated with the given resource
+ * and then decrements the semaphore to indicate usage of the resource.
+ *
+ * @param resource The identifier of the resource to be used.
+ * @return int The result of the semaphore decrement operation.
+ */
 int useResource(int resource) {
 
 	int semId = getSemIdFromResource(resource);
@@ -328,12 +504,34 @@ int useResource(int resource) {
 	return decSem(semId);
 
 }
+/**
+ * @brief Decrements the semaphore associated with the given ingredient.
+ *
+ * This function retrieves the semaphore ID for the specified ingredient
+ * by adding the ingredient value to a predefined semaphore offset and
+ * then calls the decSem function to decrement the semaphore.
+ *
+ * @param ingredient The ingredient identifier for which the semaphore
+ *                   needs to be decremented.
+ * @return int The result of the decSem function, typically indicating
+ *             success or failure of the semaphore operation.
+ */
 int useIngredient(int ingredient) {
 	int semId = getSemIdFromResource(semOffset + ingredient);
 
 	return decSem(semId);
 }
 
+/**
+ * @brief Recovers a resource by incrementing its associated semaphore.
+ *
+ * This function takes a resource identifier, retrieves the corresponding
+ * semaphore ID using the getSemIdFromResource function, and then increments
+ * the semaphore using the incSem function.
+ *
+ * @param resource The identifier of the resource to be recovered.
+ * @return int The result of the incSem function, typically indicating success or failure.
+ */
 int recoverResource(int resource) {
 
 	int semId = getSemIdFromResource(resource);
@@ -341,12 +539,30 @@ int recoverResource(int resource) {
 	return incSem(semId);
 }
 
+/**
+ * @brief Recovers the specified ingredient by incrementing its semaphore.
+ *
+ * This function retrieves the semaphore ID associated with the given ingredient
+ * and increments the semaphore to indicate that the ingredient has been recovered.
+ *
+ * @param ingredient The identifier of the ingredient to be recovered.
+ * @return int The result of the semaphore increment operation.
+ */
 int recoverIngredient(int ingredient) {
 	int semId = getSemIdFromResource(semOffset + ingredient);
 
 	return incSem(semId);
 }
 
+/**
+ * @brief Checks if a given item is in the pantry.
+ *
+ * This function iterates through the pantryIngredients array to determine
+ * if the specified item is present in the pantry.
+ *
+ * @param item The item to check for in the pantry.
+ * @return int Returns 1 if the item is found in the pantry, otherwise returns 0.
+ */
 int isPantryItem(int item) {
 	int pantrySize = sizeof(pantryIngredients) / sizeof(pantryIngredients[0]);
 
@@ -359,6 +575,16 @@ int isPantryItem(int item) {
 	return 0;
 }
 
+/**
+ * @brief Checks if a given item is in the refrigerator.
+ *
+ * This function iterates through the refrigeratorIngredients array to determine
+ * if the specified item is present. If the item is found, the function returns 1,
+ * otherwise it returns 0.
+ *
+ * @param item The item to check for in the refrigerator.
+ * @return int Returns 1 if the item is found in the refrigerator, otherwise returns 0.
+ */
 int isRefrigeratorItem(int item) {
 	int refrigeratorSize = sizeof(refrigeratorIngredients) / sizeof(refrigeratorIngredients[0]);
 
@@ -371,6 +597,14 @@ int isRefrigeratorItem(int item) {
 	return 0;
 }
 
+/**
+ * @brief Signal handler for SIGINT.
+ *
+ * This function is called when the program receives a SIGINT signal (usually generated by pressing Ctrl+C).
+ * It performs cleanup operations and terminates the program gracefully.
+ *
+ * @param signal The signal number received (expected to be SIGINT).
+ */
 void sigHandler(int signal) {
 	if (signal == SIGINT) {
 
@@ -384,6 +618,17 @@ void sigHandler(int signal) {
 
 }
 
+/**
+ * @brief Decrements the semaphores for the specified ingredient and baker.
+ *
+ * This function checks if the specified ingredient is in the pantry or refrigerator.
+ * If the ingredient is in the pantry, the baker will attempt to enter the pantry and use the resource.
+ * If the ingredient is in the refrigerator, the baker will attempt to enter the refrigerator and use the resource.
+ * The function then waits for the specified ingredient to be available and uses it.
+ *
+ * @param bakerId The ID of the baker attempting to use the ingredient.
+ * @param ingredient The ingredient that the baker needs.
+ */
 void decSemaphores(int bakerId, int ingredient) {
 	if (isIn(pantryIngredients, 6, ingredient)) {
 		printf("Baker %d is looking to enter the pantry\n", bakerId);
@@ -403,6 +648,19 @@ void decSemaphores(int bakerId, int ingredient) {
 
 }
 
+/**
+ * @brief Increments the semaphores for the specified ingredient and handles resource recovery.
+ *
+ * This function checks if the given ingredient is in the pantry or refrigerator.
+ * If the ingredient is in the pantry, it logs the baker's intention to leave the pantry,
+ * recovers the pantry resource, and logs that the baker has left the pantry.
+ * Similarly, if the ingredient is in the refrigerator, it logs the baker's intention to leave the refrigerator,
+ * recovers the refrigerator resource, and logs that the baker has left the refrigerator.
+ * Finally, it recovers the specified ingredient.
+ *
+ * @param bakerId The ID of the baker attempting to increment the ingredient semaphore.
+ * @param ingredient The ingredient for which the semaphore needs to be incremented.
+ */
 void incIngredientSemaphores(int bakerId, int ingredient) {
 	if (isIn(pantryIngredients, 6, ingredient)) {
 		printf("Baker %d is looking to leave the pantry\n", bakerId);
@@ -420,6 +678,28 @@ void incIngredientSemaphores(int bakerId, int ingredient) {
 
 }
 
+/**
+ * Initializes the ingredients for a given recipe.
+ *
+ * @param recipe The recipe identifier. Valid values are:
+ *               - COOKIE
+ *               - PANCAKE
+ *               - PIZZA
+ *               - PRETZEL
+ *               - CINROLL
+ * @param initRecipe An array to store the initialized ingredients. The array should have enough space to hold all ingredient values.
+ * @return A pointer to the initialized ingredients array.
+ *
+ * The function prints messages indicating the initialization process. If the recipe identifier is invalid (less than 0 or greater than 4), 
+ * the function prints an error message and exits the program.
+ *
+ * The ingredients are initialized as follows:
+ * - COOKIE: FLOUR, SUGAR, MILK, BUTTER
+ * - PANCAKE: FLOUR, SUGAR, BAKING_SODA, SALT, EGGS, MILK, BUTTER
+ * - PIZZA: SUGAR, YEAST, SALT
+ * - PRETZEL: FLOUR, SUGAR, YEAST, BAKING_SODA, SALT, EGGS
+ * - CINROLL: FLOUR, SUGAR, SALT, CINNAMON, EGGS, BUTTER
+ */
 int* initRecipes(int recipe, int initRecipe[]) {
 
 	printf("Initializing %d recipe\n", recipe);
@@ -491,6 +771,21 @@ int* initRecipes(int recipe, int initRecipe[]) {
 }
 
 
+/**
+ * @brief Checks if a given recipe is valid and contains at least one ingredient.
+ *
+ * This function checks if the provided recipe array has the correct size and 
+ * contains at least one ingredient. The recipe is considered valid if its size 
+ * is exactly 9. If the size is not 9, the function prints an error message and 
+ * terminates the program. If the size is valid, the function checks each element 
+ * of the recipe array to see if it contains the ingredient represented by the 
+ * value 1. If at least one ingredient is found, the function returns 1. Otherwise, 
+ * it returns 0.
+ *
+ * @param recipe An array of integers representing the recipe.
+ * @param size The size of the recipe array.
+ * @return int Returns 1 if the recipe contains at least one ingredient, otherwise 0.
+ */
 int checkRecipe(int recipe[], int size) {
 	if (size != 9) {
 		perror("Not a valid recipe");
@@ -507,6 +802,16 @@ int checkRecipe(int recipe[], int size) {
 	return 0;
 }
 
+/**
+ * @brief Toggles the presence of an ingredient in a recipe.
+ *
+ * This function checks if the specified ingredient is present in the recipe.
+ * If the ingredient is present (indicated by a value of 1), it removes the ingredient
+ * by setting its value to 0.
+ *
+ * @param recipe Pointer to an array representing the recipe, where each index corresponds to an ingredient.
+ * @param ingredient The index of the ingredient to be toggled in the recipe array.
+ */
 void addIngredient(int* recipe, int ingredient) {
 
 	if (recipe[ingredient] == 1) {
@@ -514,6 +819,18 @@ void addIngredient(int* recipe, int ingredient) {
 	}
 }
 
+/**
+ * @brief Retrieves an ingredient for a baker and updates the recipe.
+ *
+ * This function handles the process of a baker obtaining an ingredient,
+ * updating the recipe with the ingredient, and then returning the ingredient.
+ * It uses semaphores to manage access to the ingredients.
+ *
+ * @param bakerId The ID of the baker retrieving the ingredient.
+ * @param recipe A pointer to the recipe array to be updated.
+ * @param ingredient The ingredient to be retrieved and added to the recipe.
+ * @return Always returns 1.
+ */
 int getIngredient(int bakerId, int* recipe, int ingredient) {
 	decSemaphores(bakerId, ingredient);
 	addIngredient(recipe, ingredient);
@@ -528,6 +845,20 @@ int getIngredient(int bakerId, int* recipe, int ingredient) {
 	return 1;
 }
 
+/**
+ * @brief Checks if a specific ingredient is available in the recipe and attempts to get it.
+ *
+ * This function verifies if the provided recipe is valid and if the specified ingredient
+ * is within the acceptable range. If the recipe is valid and the ingredient is available,
+ * it attempts to get the ingredient.
+ *
+ * @param bakerId The ID of the baker attempting to get the ingredient.
+ * @param recipe An array representing the recipe with ingredients.
+ * @param size The size of the recipe array, which must be 9.
+ * @param ingredient The index of the ingredient to check and get.
+ * @return Returns 0 if the ingredient is not available or if the recipe is invalid.
+ *         Otherwise, it returns the result of the getIngredient function.
+ */
 //Return: Success of getting an ingredient
 int checkIngredient(int bakerId, int* recipe, int size, int ingredient) {
 
@@ -550,6 +881,18 @@ int checkIngredient(int bakerId, int* recipe, int size, int ingredient) {
 	return 0;
 }
 
+/**
+ * @brief Retrieves available ingredients for a given baker based on a recipe.
+ *
+ * This function iterates through the ingredients in the recipe and checks 
+ * their availability for the specified baker. It updates the status if any 
+ * ingredient is successfully obtained.
+ *
+ * @param bakerId The ID of the baker requesting the ingredients.
+ * @param recipe A pointer to an array representing the recipe ingredients.
+ * @return An integer indicating if any ingredient was successfully obtained 
+ *         (non-zero if successful, zero otherwise).
+ */
 // Return: If an ingredient was successfully gotten
 int getAvailableIngredients(int bakerId, int* recipe) {
 	int updated = 0;
@@ -560,6 +903,16 @@ int getAvailableIngredients(int bakerId, int* recipe) {
 	return updated;
 }
 
+/**
+ * Checks if there is at least one remaining recipe in the list.
+ *
+ * This function iterates through the given array of recipes and checks if there
+ * is at least one non-zero element, indicating that a recipe is remaining.
+ *
+ * @param recipes An array of integers representing the recipes.
+ * @param length The length of the recipes array.
+ * @return 1 if there is at least one remaining recipe, 0 otherwise.
+ */
 int isARecipeRemaining(int recipes[], int length) {
 	for (int i = 0; i < length; i++) {
 		if (recipes[i]) {
@@ -570,6 +923,17 @@ int isARecipeRemaining(int recipes[], int length) {
 	return 0;
 }
 
+/**
+ * @brief Acquires the necessary mixing resources for a baker.
+ *
+ * This function attempts to acquire a mixer, a bowl, and a spoon for the baker
+ * identified by the given bakerId. It logs the process of acquiring each resource.
+ *
+ * @param bakerId The ID of the baker attempting to acquire the resources.
+ * @param tools An array where the acquired resources will be stored.
+ * @param size The size of the tools array. Must be 3.
+ * @return 0 on success, or an error code on failure.
+ */
 int getMixingResources(int bakerId, int* tools, int size) {
 	if (size != 3) {
 		perror("Not a valid set of tools");
@@ -590,6 +954,17 @@ int getMixingResources(int bakerId, int* tools, int size) {
 	return 0;
 }
 
+/**
+ * @brief Returns the mixing resources used by a baker.
+ *
+ * This function recovers the resources used for mixing, which include:
+ * - Mixer
+ * - Bowl
+ * - Spoon
+ *
+ * @param bakerId The ID of the baker returning the resources.
+ * @return Always returns 0.
+ */
 int returnMixingResources(int bakerId) {
 	recoverResource(MIXER);
 	recoverResource(BOWL);
@@ -598,6 +973,18 @@ int returnMixingResources(int bakerId) {
 	return 0;
 }
 
+/**
+ * @brief Mixes ingredients using the specified tools.
+ *
+ * This function simulates a baker mixing ingredients together. It first acquires
+ * the necessary mixing resources, then prints messages indicating the mixing process,
+ * and finally releases the mixing resources.
+ *
+ * @param bakerId The ID of the baker performing the mixing.
+ * @param tools An array of integers representing the tools required for mixing.
+ * @param size The number of tools in the tools array.
+ * @return Always returns 0.
+ */
 int mixIngredients(int bakerId, int* tools, int size) {
 	getMixingResources(bakerId, tools, size);
 
@@ -613,6 +1000,19 @@ int mixIngredients(int bakerId, int* tools, int size) {
 }
 
 
+/**
+ * @brief Cooks a recipe using the oven.
+ *
+ * This function simulates a baker using the oven to cook a specified recipe.
+ * It prints messages to indicate the stages of the cooking process, including
+ * looking to use the oven, using the oven, and finishing using the oven.
+ * The function also simulates the time taken to cook the recipe by sleeping
+ * for 3 seconds.
+ *
+ * @param bakerId The ID of the baker who is cooking the recipe.
+ * @param recipe The ID of the recipe to be cooked.
+ * @return Always returns 0.
+ */
 int cookRecipe(int bakerId, int recipe) {
 	printf("Baker %d is looking to use the oven to cook recipe %d\n", bakerId, recipe);
 
@@ -629,6 +1029,26 @@ int cookRecipe(int bakerId, int recipe) {
 	return 0;
 }
 
+/**
+ * @brief Simulates the actions of a baker in a multi-threaded environment.
+ *
+ * This function represents the logic for a baker who is responsible for preparing
+ * various recipes. Each baker works on a set of predefined recipes and uses a set
+ * of tools to complete them. The function runs in a loop until all recipes are completed.
+ *
+ * @param val A void pointer to an integer representing the baker's ID.
+ * @return A void pointer, always returns NULL.
+ *
+ * The function performs the following steps:
+ * 1. Initializes the recipes and tools.
+ * 2. Iterates through each recipe, checking if it is completed.
+ * 3. If a recipe is not completed, the baker attempts to gather the necessary ingredients.
+ * 4. If the ingredients are available, the baker mixes and cooks the recipe.
+ * 5. The process repeats until all recipes are completed.
+ * 6. The function prints the status of the baker's progress and frees the memory allocated for the baker's ID.
+ *
+ * Note: When this function terminates, it will reclaim memory from the thread.
+ */
 void* simulateBaker(void* val) {
 	//Put all baker logic in here
 	//NOTE: When this function terminates, it will reclaim memory from the thread
@@ -722,6 +1142,16 @@ void* simulateBaker(void* val) {
 	return NULL;
 }
 
+/**
+ * @brief Spawns a new thread to simulate a baker.
+ *
+ * This function allocates memory for the baker's ID, initializes it, and creates a new thread
+ * to run the `simulateBaker` function. If the thread creation fails, an error message is printed
+ * and the program exits.
+ *
+ * @param thread A pointer to a pthread_t variable where the thread ID will be stored.
+ * @param bakerId An integer representing the ID of the baker.
+ */
 void spawnThread(pthread_t *thread, int bakerId) {
 
 	int* id = malloc(sizeof(int));
@@ -740,6 +1170,16 @@ void spawnThread(pthread_t *thread, int bakerId) {
 //	pthread_detach(*thread);
 }
 
+/**
+ * @brief Spawns a specified number of threads.
+ *
+ * This function initializes and spawns the given number of threads, each representing a baker.
+ * It prints the number of bakers being initialized and then creates each thread by calling the
+ * spawnThread function.
+ *
+ * @param threads A pointer to an array of pthread_t where the thread identifiers will be stored.
+ * @param n The number of threads (bakers) to be spawned.
+ */
 void spawnThreads(pthread_t* threads, int n) {
 	printf("Initializing %d bakers\n", n);
 	//for(int bakerId = 1; bakerId <= n; bakerId++) {
@@ -749,12 +1189,40 @@ void spawnThreads(pthread_t* threads, int n) {
 
 }
 
+/**
+ * @brief Waits for all threads in the given array to complete.
+ *
+ * This function iterates over an array of pthread_t threads and calls
+ * pthread_join on each one, ensuring that the main thread waits for
+ * each thread to complete before continuing.
+ *
+ * @param threads An array of pthread_t representing the threads to wait for.
+ * @param size The number of threads in the array.
+ */
 void waitForThreads(pthread_t* threads, int size) {
 	for(int i = 0; i < size; i++) {
 		pthread_join(threads[i], NULL);	
 	}
 }
 
+/**
+ * @file program.c
+ * @brief This program simulates a baking process with multiple bakers using semaphores for resource management and shared memory for communication.
+ *
+ * The program initializes several semaphores to manage access to kitchen resources such as mixers, pantry, refrigerator, bowls, spoons, and ovens.
+ * It also initializes semaphores for various ingredients like flour, sugar, yeast, baking soda, salt, cinnamon, eggs, milk, and butter.
+ *
+ * The program uses shared memory to store the number of bakers and a randomly selected recipe.
+ * It then creates a specified number of threads, each representing a baker, and waits for all threads to complete their tasks.
+ *
+ * @note The program handles the SIGINT signal to ensure proper cleanup of resources.
+ *
+ * @authors Steven Streasick, Zaydrian Price
+ * @date 2024
+ *
+ * @param None
+ * @return int: Returns 0 on successful execution.
+ */
 int main() {
 	signal(SIGINT, sigHandler);	
 
