@@ -1,5 +1,3 @@
-
-
 #include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
@@ -13,7 +11,6 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/sem.h>
-
 
 const int FLOUR = 0;
 const int SUGAR = 1;
@@ -68,21 +65,15 @@ int eggsSemId;
 int milkSemId;
 int butterSemId;
 
-const char *red = "\x1b[31m";
-const char *green = "\x1b[32m";
-const char *yellow = "\x1b[33m";
-const char *blue = "\x1b[34m";
-const char *magenta = "\x1b[35m";
-const char *cyan = "\x1b[36m";
-const char *reset_color = "\x1b[0m";
-
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
+const char* colors[] = {
+    "\033[0;31m", // Red
+    "\033[0;32m", // Green
+    "\033[0;33m", // Yellow
+    "\033[0;34m", // Blue
+    "\033[0;35m", // Magenta
+    "\033[0;36m", // Cyan
+    "\033[0;37m"  // White
+};
 
 /**
  * @struct semaphoresStruct
@@ -381,7 +372,7 @@ int cleanupSemaphore(int semId) {
 	if (semctl(semId, 0, IPC_RMID) == -1) {
 		perror("Failed to remove semaphores");
 	}
-	//TODO: Add erorr checking
+	//TODO: Add error checking
 	return 0;
 }
 
@@ -628,21 +619,23 @@ void sigHandler(int signal) {
  *
  * @param bakerId The ID of the baker attempting to use the ingredient.
  * @param ingredient The ingredient that the baker needs.
+ * @param color The color code for printing messages.
+ * @param resetColor The color code to reset the terminal color.
  */
-void decSemaphores(int bakerId, int ingredient) {
+void decSemaphores(int bakerId, int ingredient, char* color, char* resetColor) {
 	if (isIn(pantryIngredients, 6, ingredient)) {
-		printf("Baker %d is looking to enter the pantry\n", bakerId);
+		printf("%sBaker %d is looking to enter the pantry\n%s", color, bakerId, resetColor);
 		useResource(PANTRY);
-		printf("Baker %d entered the pantry\n", bakerId);
+		printf("%sBaker %d entered the pantry\n%s", color, bakerId, resetColor);
 	}
 
 	if (isIn(refrigeratorIngredients, 3, ingredient)) {
-		printf("Baker %d is looking to enter the refrigerator\n", bakerId);
+		printf("%sBaker %d is looking to enter the refrigerator\n%s", color, bakerId, resetColor);
 		useResource(REFRIGERATOR);
-		printf("Baker %d entered the refrigerator\n", bakerId);
+		printf("%sBaker %d entered the refrigerator\n%s", color, bakerId, resetColor);
 	}
 
-	printf("Baker %d is waiting for ingredient %d\n", bakerId, ingredient);
+	printf("%sBaker %d is waiting for ingredient %d\n%s", color, bakerId, ingredient, resetColor);
 
 	useIngredient(ingredient);
 
@@ -660,18 +653,20 @@ void decSemaphores(int bakerId, int ingredient) {
  *
  * @param bakerId The ID of the baker attempting to increment the ingredient semaphore.
  * @param ingredient The ingredient for which the semaphore needs to be incremented.
+ * @param color The color code for printing messages.
+ * @param resetColor The color code to reset the terminal color.
  */
-void incIngredientSemaphores(int bakerId, int ingredient) {
+void incIngredientSemaphores(int bakerId, int ingredient, char* color, char* resetColor) {
 	if (isIn(pantryIngredients, 6, ingredient)) {
-		printf("Baker %d is looking to leave the pantry\n", bakerId);
+		printf("%sBaker %d is looking to leave the pantry\n%s", color, bakerId, resetColor);
 		recoverResource(PANTRY);
-		printf("Baker %d left the pantry\n", bakerId);
+		printf("%sBaker %d left the pantry\n%s", color, bakerId, resetColor);
 	}
 
 	if (isIn(refrigeratorIngredients, 3, ingredient)) {
-		printf("Baker %d is looking to leave the refrigerator\n", bakerId);
+		printf("%sBaker %d is looking to leave the refrigerator\n%s", color, bakerId, resetColor);
 		recoverResource(REFRIGERATOR);
-		printf("Baker %d left the refrigerator\n", bakerId);
+		printf("%sBaker %d left the refrigerator\n%s", color, bakerId, resetColor);
 	}
 
 	recoverIngredient(ingredient);
@@ -709,7 +704,6 @@ int* initRecipes(int recipe, int initRecipe[]) {
 	}
 	else {
 		if (recipe == COOKIE) {
-			printf("Initting a cookie\n");
 			initRecipe[FLOUR] = 1;
 			initRecipe[SUGAR] = 1;
 			initRecipe[YEAST] = 0;
@@ -829,18 +823,20 @@ void addIngredient(int* recipe, int ingredient) {
  * @param bakerId The ID of the baker retrieving the ingredient.
  * @param recipe A pointer to the recipe array to be updated.
  * @param ingredient The ingredient to be retrieved and added to the recipe.
+ * @param color The color code for printing messages.
+ * @param resetColor The color code to reset the terminal color.
  * @return Always returns 1.
  */
-int getIngredient(int bakerId, int* recipe, int ingredient) {
-	decSemaphores(bakerId, ingredient);
+int getIngredient(int bakerId, int* recipe, int ingredient, char* color, char* resetColor) {
+	decSemaphores(bakerId, ingredient, color, resetColor);
 	addIngredient(recipe, ingredient);
-	printf("Baker %d got ingredient %d\n", bakerId, ingredient);
+	printf("%sBaker %d got ingredient %d\n%s", color, bakerId, ingredient, resetColor);
 
 	sleep(1);
 
-	printf("Baker %d is returning ingredient %d\n", bakerId, ingredient);
+	printf("%sBaker %d is returning ingredient %d\n%s", color, bakerId, ingredient, resetColor);
 
-	incIngredientSemaphores(bakerId, ingredient);
+	incIngredientSemaphores(bakerId, ingredient, color, resetColor);
 
 	return 1;
 }
@@ -860,7 +856,7 @@ int getIngredient(int bakerId, int* recipe, int ingredient) {
  *         Otherwise, it returns the result of the getIngredient function.
  */
 //Return: Success of getting an ingredient
-int checkIngredient(int bakerId, int* recipe, int size, int ingredient) {
+int checkIngredient(int bakerId, int* recipe, int size, int ingredient, char* color, char* resetColor) {
 
 	if (size != 9) {
 		perror("Not a valid recipe");
@@ -874,7 +870,7 @@ int checkIngredient(int bakerId, int* recipe, int size, int ingredient) {
 			return 0;
 		}
 
-		return getIngredient(bakerId, recipe, ingredient);
+		return getIngredient(bakerId, recipe, ingredient, color, resetColor);
 
 	}
 
@@ -894,10 +890,10 @@ int checkIngredient(int bakerId, int* recipe, int size, int ingredient) {
  *         (non-zero if successful, zero otherwise).
  */
 // Return: If an ingredient was successfully gotten
-int getAvailableIngredients(int bakerId, int* recipe) {
+int getAvailableIngredients(int bakerId, int* recipe, char* color, char* resetColor) {
 	int updated = 0;
 	for (int i = 0; i < 9; i++) {
-		updated |= checkIngredient(bakerId, recipe, 9, i);
+		updated |= checkIngredient(bakerId, recipe, 9, i, color, resetColor);
 	}
 
 	return updated;
@@ -932,24 +928,26 @@ int isARecipeRemaining(int recipes[], int length) {
  * @param bakerId The ID of the baker attempting to acquire the resources.
  * @param tools An array where the acquired resources will be stored.
  * @param size The size of the tools array. Must be 3.
+ * @param color The color code for the log messages.
+ * @param resetColor The color code to reset the log messages.
  * @return 0 on success, or an error code on failure.
  */
-int getMixingResources(int bakerId, int* tools, int size) {
+int getMixingResources(int bakerId, int* tools, int size, char* color, char* resetColor) {
 	if (size != 3) {
 		perror("Not a valid set of tools");
 	}
 
-	printf("Baker %d is looking to aquire a mixer\n", bakerId);
+	printf("%sBaker %d is looking to acquire a mixer\n%s", color, bakerId, resetColor);
 	tools[MIXER] = useResource(MIXER);
-	printf("Baker %d aquired a mixer\n", bakerId);
+	printf("%sBaker %d acquired a mixer\n%s", color, bakerId, resetColor);
 
-	printf("Baker %d is looking to aquire a bowl\n", bakerId);
+	printf("%sBaker %d is looking to acquire a bowl\n%s", color, bakerId, resetColor);
 	tools[MIXER] = useResource(BOWL);
-	printf("Baker %d aquired a bowl\n", bakerId);
+	printf("%sBaker %d acquired a bowl\n%s", color, bakerId, resetColor);
 
-	printf("Baker %d is looking to aquire as spoon\n", bakerId);
+	printf("%sBaker %d is looking to acquire as spoon\n%s", color, bakerId, resetColor);
 	tools[MIXER] = useResource(SPOON);
-	printf("Baker %d aquired a spoon\n", bakerId);
+	printf("%sBaker %d acquired a spoon\n%s", color, bakerId, resetColor);
 
 	return 0;
 }
@@ -983,16 +981,18 @@ int returnMixingResources(int bakerId) {
  * @param bakerId The ID of the baker performing the mixing.
  * @param tools An array of integers representing the tools required for mixing.
  * @param size The number of tools in the tools array.
+ * @param color A string representing the color code for the output text.
+ * @param resetColor A string representing the reset color code for the output text.
  * @return Always returns 0.
  */
-int mixIngredients(int bakerId, int* tools, int size) {
-	getMixingResources(bakerId, tools, size);
+int mixIngredients(int bakerId, int* tools, int size, char* color, char* resetColor) {
+	getMixingResources(bakerId, tools, size, color, resetColor);
 
-	printf("Baker %d is mixing the ingredients together\n", bakerId);
+	printf("%sBaker %d is mixing the ingredients together\n%s", color, bakerId, resetColor);
 
 	sleep(1);
 
-	printf("Baker %d mixed all of the ingredients together\n", bakerId);
+	printf("%sBaker %d mixed all of the ingredients together\n%s", color, bakerId, resetColor);
 
 	returnMixingResources(bakerId);
 
@@ -1011,18 +1011,20 @@ int mixIngredients(int bakerId, int* tools, int size) {
  *
  * @param bakerId The ID of the baker who is cooking the recipe.
  * @param recipe The ID of the recipe to be cooked.
+ * @param color The color code to be used for the printed messages.
+ * @param resetColor The color code to reset the printed messages to default.
  * @return Always returns 0.
  */
-int cookRecipe(int bakerId, int recipe) {
-	printf("Baker %d is looking to use the oven to cook recipe %d\n", bakerId, recipe);
+int cookRecipe(int bakerId, int recipe, char* color, char* resetColor) {
+	printf("%sBaker %d is looking to use the oven to cook recipe %d%s\n", color, bakerId, recipe, resetColor);
 
 	useResource(OVEN);
 
-	printf("Baker %d is using the oven to cook recipe %d\n", bakerId, recipe);
+	printf("%sBaker %d is using the oven to cook recipe %d%s\n", color, bakerId, recipe, resetColor);
 
 	sleep(3);
 
-	printf("Baker %d finished using the oven to cook recipe %d\n", bakerId, recipe);
+	printf("%sBaker %d finished using the oven to cook recipe %d%s\n", color, bakerId, recipe, resetColor);
 
 	recoverResource(OVEN);
 
@@ -1055,8 +1057,13 @@ void* simulateBaker(void* val) {
 	int* bakerIdRef = (int*)val;
 	int bakerId = *bakerIdRef;
 
-	//Setup recipes
 
+    // Select color based on bakerId
+    const char* color = colors[bakerId % 7];
+    const char* resetColor = "\033[0m";
+
+
+	//Setup recipes
 	int cookieArray[9] = {};
 	int pancakeArray[9];
 	int pizzaDoughArray[9];
@@ -1091,43 +1098,43 @@ void* simulateBaker(void* val) {
 		int* currentRecipe = NULL;
 		if (i == COOKIE) {
 			currentRecipe = cookie;
-			printf("Baker %d is working on making Cookies\n", bakerId);
+			printf("%sBaker %d is working on making Cookies%s\n", color, bakerId, resetColor);
 		}
 
 		if (i == PANCAKE) {
 			currentRecipe = pancake;
-			printf("Baker %d is working on making Pancakes\n", bakerId);
+			printf("%sBaker %d is working on making Pancakes%s\n", color, bakerId, resetColor);
 		}
 
 		if (i == PIZZA) {
 			currentRecipe = pizzaDough;
-			printf("Baker %d is working on making Pizza Dough\n", bakerId);
+			printf("%sBaker %d is working on making Pizza Dough%s\n", color, bakerId, resetColor);
 		}
 
 		if (i == PRETZEL) {
 			currentRecipe = softPretzel;
-			printf("Baker %d is working on making Soft Pretzels\n", bakerId);
+			printf("%sBaker %d is working on making Soft Pretzels%s\n", color, bakerId, resetColor);
 		}
 
 		if (i == CINROLL) {
 			currentRecipe = cinnamonRoll;
-			printf("Baker %d is working on making Cinnamon Rolls\n", bakerId);
+			printf("%sBaker %d is working on making Cinnamon Rolls%s\n", color, bakerId, resetColor);
 		}
 
 		if (currentRecipe == NULL) {
 			printf("Invalid index for recipe found within simulateBaker\n");
 		}
 
-		int isRecipeComplete = getAvailableIngredients(bakerId, currentRecipe);
+		int isRecipeComplete = getAvailableIngredients(bakerId, currentRecipe, color, resetColor);
 		recipesRemaining[i] = !isRecipeComplete;
 
 		if (isRecipeComplete) {
 			//Check if the baker is getting ramsied here. If they are, we only need to reset the array
-			mixIngredients(bakerId, tools, 3);
+			mixIngredients(bakerId, tools, 3, color, resetColor);
 
-			cookRecipe(bakerId, i);
+			cookRecipe(bakerId, i, color, resetColor);
 
-			printf("Baker %d finished recipe %d\n", bakerId, i);
+			printf("%sBaker %d finished recipe %d%s\n", color, bakerId, i, resetColor);
 
 		}
 
@@ -1136,7 +1143,7 @@ void* simulateBaker(void* val) {
 
 	}
 
-	printf("Baker %d has finished\n", bakerId);
+	printf("%sBaker %d has finished%s\n", color, bakerId, resetColor);
 
 	free(bakerIdRef);
 	return NULL;
