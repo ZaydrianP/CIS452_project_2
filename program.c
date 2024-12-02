@@ -66,14 +66,17 @@ int milkSemId;
 int butterSemId;
 
 const char* colors[] = {
-    "\033[0;31m", // Red
-    "\033[0;32m", // Green
-    "\033[0;33m", // Yellow
-    "\033[0;34m", // Blue
-    "\033[0;35m", // Magenta
-    "\033[0;36m", // Cyan
-    "\033[0;37m"  // White
+	"\033[0;31m", // Red
+	"\033[0;32m", // Green
+	"\033[0;33m", // Yellow
+	"\033[0;34m", // Blue
+	"\033[0;35m", // Magenta
+	"\033[0;36m", // Cyan
+	"\033[0;37m"  // White
 };
+
+const char* programPath = "./program.c";
+int ramsiedSharedMemoryID = 0;
 
 /**
  * @struct semaphoresStruct
@@ -119,9 +122,9 @@ struct sharedMemStruct sharedMemory;
 
 /**
  * @brief A structure representing a refrigerator.
- * 
+ *
  * This structure contains an array of integers representing the ingredients
- * stored in the refrigerator. Each element in the array corresponds to a 
+ * stored in the refrigerator. Each element in the array corresponds to a
  * specific ingredient.
  */
 typedef struct {
@@ -149,7 +152,7 @@ void initializeRefrigerator(Refrigerator* fridge) {
 
 /**
  * @brief A structure representing a pantry with a fixed number of ingredients.
- * 
+ *
  * This structure is used to store the quantities of up to 9 different ingredients.
  */
 typedef struct {
@@ -233,7 +236,7 @@ int insertIntoSemaphoreArray(int resource, int semaphoreId) {
  * @param memoryAddress Pointer to the sharedMem structure to be inserted.
  * @return int Returns 0 on success, or -1 if memory allocation fails.
  */
-int insertIntoSharedMemArray(struct sharedMem *memoryAddress) {
+int insertIntoSharedMemArray(struct sharedMem* memoryAddress) {
 
 	struct sharedMem* temp = realloc(sharedMemory.sharedMemoryAddresses,
 
@@ -268,9 +271,10 @@ int insertIntoSharedMemArray(struct sharedMem *memoryAddress) {
  * @param sharedMemory Pointer to the sharedMem structure to be initialized.
  * @param key The key to be used for the shared memory segment.
  * @param size The size of the shared memory segment.
+ * @param isAlreadyCreated Boolean indicating whether the sharedMemory already exists
  * @return Returns 0 on success, exits the program on failure.
  */
-int initSharedMemory(struct sharedMem *sharedMemory, key_t key, int size) {
+int initSharedMemory(struct sharedMem* sharedMemory, key_t key, int size, int isAlreadyCreated) {
 
 	sharedMemory->id = shmget(key, size, IPC_CREAT | S_IRUSR | S_IWUSR);
 
@@ -292,7 +296,9 @@ int initSharedMemory(struct sharedMem *sharedMemory, key_t key, int size) {
 
 	}
 
-	insertIntoSharedMemArray(sharedMemory);
+	if (!isAlreadyCreated) {
+		insertIntoSharedMemArray(sharedMemory);
+	}
 
 	return 0;
 }
@@ -685,7 +691,7 @@ void incIngredientSemaphores(int bakerId, int ingredient, char* color, char* res
  * @param initRecipe An array to store the initialized ingredients. The array should have enough space to hold all ingredient values.
  * @return A pointer to the initialized ingredients array.
  *
- * The function prints messages indicating the initialization process. If the recipe identifier is invalid (less than 0 or greater than 4), 
+ * The function prints messages indicating the initialization process. If the recipe identifier is invalid (less than 0 or greater than 4),
  * the function prints an error message and exits the program.
  *
  * The ingredients are initialized as follows:
@@ -768,12 +774,12 @@ int* initRecipes(int recipe, int initRecipe[]) {
 /**
  * @brief Checks if a given recipe is valid and contains at least one ingredient.
  *
- * This function checks if the provided recipe array has the correct size and 
- * contains at least one ingredient. The recipe is considered valid if its size 
- * is exactly 9. If the size is not 9, the function prints an error message and 
- * terminates the program. If the size is valid, the function checks each element 
- * of the recipe array to see if it contains the ingredient represented by the 
- * value 1. If at least one ingredient is found, the function returns 1. Otherwise, 
+ * This function checks if the provided recipe array has the correct size and
+ * contains at least one ingredient. The recipe is considered valid if its size
+ * is exactly 9. If the size is not 9, the function prints an error message and
+ * terminates the program. If the size is valid, the function checks each element
+ * of the recipe array to see if it contains the ingredient represented by the
+ * value 1. If at least one ingredient is found, the function returns 1. Otherwise,
  * it returns 0.
  *
  * @param recipe An array of integers representing the recipe.
@@ -855,7 +861,7 @@ int getIngredient(int bakerId, int* recipe, int ingredient, char* color, char* r
  * @return Returns 0 if the ingredient is not available or if the recipe is invalid.
  *         Otherwise, it returns the result of the getIngredient function.
  */
-//Return: Success of getting an ingredient
+ //Return: Success of getting an ingredient
 int checkIngredient(int bakerId, int* recipe, int size, int ingredient, char* color, char* resetColor) {
 
 	if (size != 9) {
@@ -880,16 +886,16 @@ int checkIngredient(int bakerId, int* recipe, int size, int ingredient, char* co
 /**
  * @brief Retrieves available ingredients for a given baker based on a recipe.
  *
- * This function iterates through the ingredients in the recipe and checks 
- * their availability for the specified baker. It updates the status if any 
+ * This function iterates through the ingredients in the recipe and checks
+ * their availability for the specified baker. It updates the status if any
  * ingredient is successfully obtained.
  *
  * @param bakerId The ID of the baker requesting the ingredients.
  * @param recipe A pointer to an array representing the recipe ingredients.
- * @return An integer indicating if any ingredient was successfully obtained 
+ * @return An integer indicating if any ingredient was successfully obtained
  *         (non-zero if successful, zero otherwise).
  */
-// Return: If an ingredient was successfully gotten
+ // Return: If an ingredient was successfully gotten
 int getAvailableIngredients(int bakerId, int* recipe, char* color, char* resetColor) {
 	int updated = 0;
 	for (int i = 0; i < 9; i++) {
@@ -1058,9 +1064,9 @@ void* simulateBaker(void* val) {
 	int bakerId = *bakerIdRef;
 
 
-    // Select color based on bakerId
-    const char* color = colors[bakerId % 7];
-    const char* resetColor = "\033[0m";
+	// Select color based on bakerId
+	const char* color = colors[bakerId % 7];
+	const char* resetColor = "\033[0m";
 
 
 	//Setup recipes
@@ -1083,6 +1089,16 @@ void* simulateBaker(void* val) {
 	tools[MIXER] = 1;
 	tools[BOWL] = 1;
 	tools[SPOON] = 1;
+
+	key_t key = ftok(programPath, ramsiedSharedMemoryID);
+	struct sharedMem sharedMemory;
+	int failure = initSharedMemory(&sharedMemory, key, 2 * sizeof(int), 1);
+	if (failure) {
+		perror("Unable to get ramsied information");
+	}
+
+	int ramsiedBakerId = sharedMemory.address[0];
+	int ramsiedRecipeId = sharedMemory.address[1];
 
 	//Iterate through each of the recipes.
 	int i = 0;
@@ -1130,12 +1146,16 @@ void* simulateBaker(void* val) {
 
 		if (isRecipeComplete) {
 			//Check if the baker is getting ramsied here. If they are, we only need to reset the array
-			mixIngredients(bakerId, tools, 3, color, resetColor);
+			if (bakerId == ramsiedBakerId && i == ramsiedRecipeId) {
+				printf("%sBaker %d has been ramsied on recipe %d%s\n", color, bakerId, i, resetColor);
+				initRecipes(i, currentRecipe);
+			} else {
+				mixIngredients(bakerId, tools, 3, color, resetColor);
 
-			cookRecipe(bakerId, i, color, resetColor);
+				cookRecipe(bakerId, i, color, resetColor);
 
-			printf("%sBaker %d finished recipe %d%s\n", color, bakerId, i, resetColor);
-
+				printf("%sBaker %d finished recipe %d%s\n", color, bakerId, i, resetColor);
+			}
 		}
 
 		i++;
@@ -1159,7 +1179,7 @@ void* simulateBaker(void* val) {
  * @param thread A pointer to a pthread_t variable where the thread ID will be stored.
  * @param bakerId An integer representing the ID of the baker.
  */
-void spawnThread(pthread_t *thread, int bakerId) {
+void spawnThread(pthread_t* thread, int bakerId) {
 
 	int* id = malloc(sizeof(int));
 	*id = bakerId;
@@ -1174,7 +1194,7 @@ void spawnThread(pthread_t *thread, int bakerId) {
 		exit(1);
 	}
 
-//	pthread_detach(*thread);
+	//	pthread_detach(*thread);
 }
 
 /**
@@ -1207,8 +1227,8 @@ void spawnThreads(pthread_t* threads, int n) {
  * @param size The number of threads in the array.
  */
 void waitForThreads(pthread_t* threads, int size) {
-	for(int i = 0; i < size; i++) {
-		pthread_join(threads[i], NULL);	
+	for (int i = 0; i < size; i++) {
+		pthread_join(threads[i], NULL);
 	}
 }
 
@@ -1231,7 +1251,7 @@ void waitForThreads(pthread_t* threads, int size) {
  * @return int: Returns 0 on successful execution.
  */
 int main() {
-	signal(SIGINT, sigHandler);	
+	signal(SIGINT, sigHandler);
 
 	mixerSemID = initSemaphore(MIXER, 2);
 	pantrySemID = initSemaphore(PANTRY, 1);
@@ -1252,12 +1272,12 @@ int main() {
 
 	//Write to shared memory the baker and the recipe to get ramsied.
 	struct sharedMem sharedMemory;
-	key_t key = ftok("./program.c", 0);
+	key_t key = ftok(programPath, ramsiedSharedMemoryID);
 
-	initSharedMemory(&sharedMemory, key, 2 * sizeof(int));
+	initSharedMemory(&sharedMemory, key, 2 * sizeof(int), 0);
 
 
-	while(1) {
+	while (1) {
 		int bakers = -1;
 
 		while (bakers < 0) {
@@ -1272,7 +1292,7 @@ int main() {
 		//Create n threads, with each one representing a baker.
 		srand(time(NULL));
 
-		sharedMemory.address[0] = rand() % bakers; 
+		sharedMemory.address[0] = rand() % bakers;
 		sharedMemory.address[1] = rand() % 5;
 
 		pthread_t threads[bakers];
