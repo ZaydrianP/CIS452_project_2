@@ -226,7 +226,7 @@ int insertIntoSemaphoreArray(int resource, int semaphoreId) {
 	return 0; // Success
 
 }
-//TODO: Adjust this function based on what the sharedMemory represents.
+
 /**
  * @brief Inserts a new element into the shared memory array.
  *
@@ -335,7 +335,7 @@ int cleanupSharedMemoryAddress(struct sharedMem* sharedMemory) {
 }
 
 /**
- * Initializes a semaphore with a given resource count.
+ * @brief Initializes a semaphore with a given resource count.
  *
  * This function creates a new semaphore, sets its initial value, and inserts it into a semaphore array.
  *
@@ -372,13 +372,12 @@ int initSemaphore(int resource, int resourceCount) {
  * If the removal fails, an error message is printed to standard error.
  *
  * @param semId The identifier of the semaphore set to be removed.
- * @return Returns 0 on success. Note: Error checking and handling need to be added.
+ * @return Returns 0 on success.
  */
 int cleanupSemaphore(int semId) {
 	if (semctl(semId, 0, IPC_RMID) == -1) {
 		perror("Failed to remove semaphores");
 	}
-	//TODO: Add error checking
 	return 0;
 }
 
@@ -501,6 +500,7 @@ int useResource(int resource) {
 	return decSem(semId);
 
 }
+
 /**
  * @brief Decrements the semaphore associated with the given ingredient.
  *
@@ -680,7 +680,7 @@ void incIngredientSemaphores(int bakerId, int ingredient, char* color, char* res
 }
 
 /**
- * Initializes the ingredients for a given recipe.
+ * @brief Initializes the ingredients for a given recipe.
  *
  * @param recipe The recipe identifier. Valid values are:
  *               - COOKIE
@@ -769,7 +769,6 @@ int* initRecipes(int recipe, int initRecipe[]) {
 		return initRecipe;
 	}
 }
-
 
 /**
  * @brief Checks if a given recipe is valid and contains at least one ingredient.
@@ -861,7 +860,6 @@ int getIngredient(int bakerId, int* recipe, int ingredient, char* color, char* r
  * @return Returns 0 if the ingredient is not available or if the recipe is invalid.
  *         Otherwise, it returns the result of the getIngredient function.
  */
- //Return: Success of getting an ingredient
 int checkIngredient(int bakerId, int* recipe, int size, int ingredient, char* color, char* resetColor) {
 
 	if (size != 9) {
@@ -895,7 +893,6 @@ int checkIngredient(int bakerId, int* recipe, int size, int ingredient, char* co
  * @return An integer indicating if any ingredient was successfully obtained
  *         (non-zero if successful, zero otherwise).
  */
- // Return: If an ingredient was successfully gotten
 int getAvailableIngredients(int bakerId, int* recipe, char* color, char* resetColor) {
 	int updated = 0;
 	for (int i = 0; i < 9; i++) {
@@ -906,7 +903,7 @@ int getAvailableIngredients(int bakerId, int* recipe, char* color, char* resetCo
 }
 
 /**
- * Checks if there is at least one remaining recipe in the list.
+ * @brief Checks if there is at least one remaining recipe in the list.
  *
  * This function iterates through the given array of recipes and checks if there
  * is at least one non-zero element, indicating that a recipe is remaining.
@@ -1004,7 +1001,6 @@ int mixIngredients(int bakerId, int* tools, int size, char* color, char* resetCo
 
 	return 0;
 }
-
 
 /**
  * @brief Cooks a recipe using the oven.
@@ -1247,7 +1243,6 @@ void waitForThreads(pthread_t* threads, int size) {
  * @authors Steven Streasick, Zaydrian Price
  * @date 2024
  *
- * @param None
  * @return int: Returns 0 on successful execution.
  */
 int main() {
