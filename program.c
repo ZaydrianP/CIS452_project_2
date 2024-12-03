@@ -697,7 +697,7 @@ void decSemaphores(int bakerId, int ingredient, char* color, char* resetColor) {
 		printf("%sBaker %d entered the refrigerator\n%s", color, bakerId, resetColor);
 	}
 
-	printf("%sBaker %d is waiting for ingredient %d\n%s", color, bakerId, ingredient, resetColor);
+	printf("%sBaker %d is waiting for ingredient %s\n%s", color, bakerId, getIngredientName(ingredient), resetColor);
 
 	useIngredient(ingredient);
 
@@ -1151,6 +1151,7 @@ void* simulateBaker(void* val) {
 
 	int ramsiedBakerId = sharedMemory.address[0];
 	int ramsiedRecipeId = sharedMemory.address[1];
+	int hasBeenRamsied = sharedMemory.address[2];
 
 	//Iterate through each of the recipes.
 	int i = 0;
@@ -1198,8 +1199,10 @@ void* simulateBaker(void* val) {
 
 		if (isRecipeComplete) {
 			//Check if the baker is getting ramsied here. If they are, we only need to reset the array
-			if (bakerId == ramsiedBakerId && i == ramsiedRecipeId) {
+			if (bakerId == ramsiedBakerId && i == ramsiedRecipeId && hasBeenRamsied == 1) {
 				printf("%sBaker %d has been %sramsied%s on recipe %s%s\n", color, bakerId, resetColor, color, getRecipeName(i), resetColor);
+				recipesRemaining[i] = 1;
+				hasBeenRamsied = 0;
 				initRecipes(i, currentRecipe);
 			} else {
 				mixIngredients(bakerId, tools, 3, color, resetColor);
@@ -1325,7 +1328,7 @@ int main() {
 	struct sharedMem sharedMemory;
 	key_t key = ftok(programPath, ramsiedSharedMemoryID);
 
-	initSharedMemory(&sharedMemory, key, 2 * sizeof(int), 0);
+	initSharedMemory(&sharedMemory, key, 3 * sizeof(int), 0);
 
 
 	while (1) {
@@ -1345,6 +1348,7 @@ int main() {
 
 		sharedMemory.address[0] = rand() % bakers;
 		sharedMemory.address[1] = rand() % 5;
+		sharedMemory.address[2] = 1;
 
 		pthread_t threads[bakers];
 		spawnThreads(threads, bakers);
