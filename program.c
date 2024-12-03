@@ -65,18 +65,34 @@ int eggsSemId;
 int milkSemId;
 int butterSemId;
 
-const char* colors[] = {
-	"\033[0;31m", // Red
-	"\033[0;32m", // Green
-	"\033[0;33m", // Yellow
-	"\033[0;34m", // Blue
-	"\033[0;35m", // Magenta
-	"\033[0;36m", // Cyan
-	"\033[0;37m"  // White
-};
-
 const char* programPath = "./program.c";
 int ramsiedSharedMemoryID = 0;
+
+/**
+ * An array of ANSI escape code strings representing different colors.
+ * These codes can be used to change the color of text output in the terminal.
+ *
+ * Colors included:
+ * - Red: "\033[0;31m"
+ * - Green: "\033[0;32m"
+ * - Yellow: "\033[0;33m"
+ * - Blue: "\033[0;34m"
+ * - Magenta: "\033[0;35m"
+ * - Cyan: "\033[0;36m"
+ * - White: "\033[0;37m"
+ */
+const char* colors[] = {
+	"\033[0;31m",
+	"\033[0;32m",
+	"\033[0;33m",
+	"\033[0;34m",
+	"\033[0;35m",
+	"\033[0;36m",
+	"\033[0;37m"
+};
+
+struct semaphoresStruct semaphores;
+struct sharedMemStruct sharedMemory;
 
 /**
  * @struct semaphoresStruct
@@ -116,10 +132,6 @@ struct sharedMemStruct {
 	struct sharedMem* sharedMemoryAddresses;
 };
 
-struct semaphoresStruct semaphores;
-
-struct sharedMemStruct sharedMemory;
-
 /**
  * @brief A structure representing a refrigerator.
  *
@@ -130,6 +142,50 @@ struct sharedMemStruct sharedMemory;
 typedef struct {
 	int ingredients[9];
 } Refrigerator;
+
+/**
+ * @brief Returns a string representation of an ingredient.
+ *
+ * This function takes an ingredient identifier as input and returns a string
+ * representing the name of the ingredient.
+ *
+ * @param ingredient The identifier of the ingredient.
+ * @return A string representing the name of the ingredient.
+ */
+const char* getIngredientName(int ingredient) {
+	switch (ingredient) {
+		case FLOUR: return "Flour";
+		case SUGAR: return "Sugar";
+		case YEAST: return "Yeast";
+		case BAKING_SODA: return "Baking Soda";
+		case SALT: return "Salt";
+		case CINNAMON: return "Cinnamon";
+		case EGGS: return "Eggs";
+		case MILK: return "Milk";
+		case BUTTER: return "Butter";
+		default: return "Unknown Ingredient";
+	}
+}
+
+/**
+ * @brief Returns the name of a recipe based on its identifier.
+ *
+ * This function takes a recipe identifier as input and returns a string
+ * representing the name of the recipe.
+ *
+ * @param recipe The identifier of the recipe.
+ * @return A string representing the name of the recipe.
+ */
+const char* getRecipeName(int recipe) {
+	switch (recipe) {
+		case COOKIE: return "Cookie";
+		case PANCAKE: return "Pancake";
+		case PIZZA: return "Pizza Dough";
+		case PRETZEL: return "Soft Pretzel";
+		case CINROLL: return "Cinnamon Roll";
+		default: return "Unknown Recipe";
+	}
+}
 
 /**
  * @brief Initializes the ingredients in the refrigerator to their default values.
@@ -703,7 +759,7 @@ void incIngredientSemaphores(int bakerId, int ingredient, char* color, char* res
  */
 int* initRecipes(int recipe, int initRecipe[]) {
 
-	printf("Initializing %d recipe\n", recipe);
+	printf("Initializing %s recipe\n", getRecipeName(recipe));
 	if (recipe < 0 || recipe > 4) {
 		perror("Not a valid recipe");
 		exit(1);
@@ -765,7 +821,7 @@ int* initRecipes(int recipe, int initRecipe[]) {
 			initRecipe[BUTTER] = 1;
 		}
 
-		printf("Finished initializing %d recipe\n", recipe);
+		printf("Finished initializing %s recipe\n", getRecipeName(recipe));
 		return initRecipe;
 	}
 }
@@ -835,11 +891,11 @@ void addIngredient(int* recipe, int ingredient) {
 int getIngredient(int bakerId, int* recipe, int ingredient, char* color, char* resetColor) {
 	decSemaphores(bakerId, ingredient, color, resetColor);
 	addIngredient(recipe, ingredient);
-	printf("%sBaker %d got ingredient %d\n%s", color, bakerId, ingredient, resetColor);
+	printf("%sBaker %d got ingredient %s\n%s", color, bakerId, getIngredientName(ingredient), resetColor);
 
 	sleep(1);
 
-	printf("%sBaker %d is returning ingredient %d\n%s", color, bakerId, ingredient, resetColor);
+	printf("%sBaker %d is returning ingredient %s\n%s", color, bakerId, getIngredientName(ingredient), resetColor);
 
 	incIngredientSemaphores(bakerId, ingredient, color, resetColor);
 
@@ -1018,15 +1074,15 @@ int mixIngredients(int bakerId, int* tools, int size, char* color, char* resetCo
  * @return Always returns 0.
  */
 int cookRecipe(int bakerId, int recipe, char* color, char* resetColor) {
-	printf("%sBaker %d is looking to use the oven to cook recipe %d%s\n", color, bakerId, recipe, resetColor);
+	printf("%sBaker %d is looking to use the oven to cook recipe %s%s\n", color, bakerId, getRecipeName(recipe), resetColor);
 
 	useResource(OVEN);
 
-	printf("%sBaker %d is using the oven to cook recipe %d%s\n", color, bakerId, recipe, resetColor);
+	printf("%sBaker %d is using the oven to cook recipe %s%s\n", color, bakerId, getRecipeName(recipe), resetColor);
 
 	sleep(3);
 
-	printf("%sBaker %d finished using the oven to cook recipe %d%s\n", color, bakerId, recipe, resetColor);
+	printf("%sBaker %d finished using the oven to cook recipe %s%s\n", color, bakerId, getRecipeName(recipe), resetColor);
 
 	recoverResource(OVEN);
 
@@ -1143,14 +1199,14 @@ void* simulateBaker(void* val) {
 		if (isRecipeComplete) {
 			//Check if the baker is getting ramsied here. If they are, we only need to reset the array
 			if (bakerId == ramsiedBakerId && i == ramsiedRecipeId) {
-				printf("%sBaker %d has been ramsied on recipe %d%s\n", color, bakerId, i, resetColor);
+				printf("%sBaker %d has been %sramsied%s on recipe %s%s\n", color, bakerId, resetColor, color, getRecipeName(i), resetColor);
 				initRecipes(i, currentRecipe);
 			} else {
 				mixIngredients(bakerId, tools, 3, color, resetColor);
 
 				cookRecipe(bakerId, i, color, resetColor);
 
-				printf("%sBaker %d finished recipe %d%s\n", color, bakerId, i, resetColor);
+				printf("%sBaker %d finished recipe %s%s\n", color, bakerId, getRecipeName(i), resetColor);
 			}
 		}
 
