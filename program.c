@@ -603,6 +603,7 @@ int recoverResource(int resource) {
  */
 int recoverIngredient(int ingredient) {
 	int semId = getSemIdFromResource(semOffset + ingredient);
+	sleep(1);
 
 	return incSem(semId);
 }
@@ -893,7 +894,7 @@ int getIngredient(int bakerId, int* recipe, int ingredient, const char* color, c
 	addIngredient(recipe, ingredient);
 	printf("%sBaker %d got ingredient %s\n%s", color, bakerId, getIngredientName(ingredient), resetColor);
 
-	sleep(1);
+	//sleep(1);
 
 	printf("%sBaker %d is returning ingredient %s\n%s", color, bakerId, getIngredientName(ingredient), resetColor);
 
